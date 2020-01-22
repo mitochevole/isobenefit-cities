@@ -4,8 +4,7 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 
-from isobenefit_cities.land_map import Land
-from isobenefit_cities.map_block import MapBlock
+from isobenefit_cities.land_map import Land, MapBlock
 from simulation_config import AMENITIES_COORDINATES
 
 def main(size_x, size_y, n_steps):

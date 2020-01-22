@@ -1,7 +1,22 @@
 import numpy as np
 import copy
 from scipy.ndimage.measurements import label
-from isobenefit_cities.map_block import MapBlock
+
+
+def d(x1, y1, x2, y2):
+    # return abs(x1-x2) + abs(y1-y2)
+    return np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
+
+class MapBlock:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.is_nature = True
+        self.is_built = False
+        self.is_centrality = False
+        self.built_size = 0
+        self.nature_size = 0
 
 class Land:
     def __init__(self, size_x, size_y, probability=0.5, T=10, minimum_area=100, boundary_conditions='reflect'):
