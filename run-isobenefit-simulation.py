@@ -1,3 +1,4 @@
+import os
 import time
 
 import matplotlib.pyplot as plt
@@ -38,7 +39,12 @@ def update_map_snapshot(land, canvas):
             if block.is_centrality:
                 canvas[block.x, block.y] = 2
 
-def save_snapshot(canvas):
+def save_snapshot(canvas, output_path, step, format='png'):
+    if format == 'png':
+        plt.imshow(canvas)
+        plt.axis('off')
+        final_path = os.path.join(output_path,step+"_png")
+        plt.savefig(final_path)
 
 
 
