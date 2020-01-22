@@ -43,7 +43,7 @@ def save_snapshot(canvas, output_path, step, format='png'):
     if format == 'png':
         plt.imshow(canvas)
         plt.axis('off')
-        final_path = os.path.join(output_path,step+"_png")
+        final_path = os.path.join(output_path,step+".png")
         plt.savefig(final_path)
 
 
