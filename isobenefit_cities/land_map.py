@@ -1,6 +1,7 @@
 import numpy as np
 import copy
-from map_block import MapBlock
+from scipy.ndimage.measurements import label
+from isobenefit_cities.map_block import MapBlock
 
 class Land:
     def __init__(self, size_x, size_y, probability=0.5, T=10, minimum_area=100, boundary_conditions='reflect'):
