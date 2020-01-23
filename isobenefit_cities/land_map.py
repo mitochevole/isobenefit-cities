@@ -99,7 +99,7 @@ class Land:
             xy_label = labels[x, y]
             size_of_region = np.where(labels == xy_label, True, False).sum()
             # print(size_of_region)
-            return size_of_region >= self.minimum_area + 1
+            return size_of_region >= self.minimum_area + 1 or size_of_region < self.minimum_area
 
     def update_map(self):
         np.random.seed(42)
