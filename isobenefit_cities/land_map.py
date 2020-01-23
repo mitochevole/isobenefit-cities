@@ -89,6 +89,14 @@ class Land:
                         return True
         return False
 
+    def has_nature_nearby(self):
+        for x in range(2 * self.T):
+            for y in range(2 * self.T):
+                if self.map[x][y].is_nature:
+                    if d(x, y, self.T, self.T) <= self.T:
+                        return True
+        return False
+
     def is_nature_extended(self, x, y):
         # this method assumes that x,y belongs to a natural region
         land_array = self.get_map_as_array()

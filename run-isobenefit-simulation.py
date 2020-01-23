@@ -30,7 +30,7 @@ def main(size_x, size_y, n_steps, output_path):
 
 
 def initialize_land(size_x, size_y, amenities_list):
-    land = Land(size_x=size_x, size_y=size_y, boundary_conditions='periodic')
+    land = Land(size_x=size_x, size_y=size_y, boundary_conditions='reflect')
     amenities = [MapBlock(x, y) for (x, y) in amenities_list]
     land.set_centralities(amenities)
     return land
