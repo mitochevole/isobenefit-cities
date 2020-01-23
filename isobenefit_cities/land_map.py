@@ -66,9 +66,9 @@ class Land:
             self.map[x][y].is_nature = False
 
     def get_neighborhood(self, x, y):
-        neighborhood = Land(2 * self.T, 2 * self.T)
-        for i in range(x - self.T, x + self.T):
-            for j in range(y - self.T, y + self.T):
+        neighborhood = Land(2 * self.T +1, 2 * self.T+1)
+        for i in range(x - self.T , x + self.T + 1):
+            for j in range(y - self.T, y + self.T + 1):
                 i2, j2 = self.boundary_transform(i, j)
                 try:
                     neighborhood.map[i + self.T - x][j + self.T - y] = self.map[i2][j2]
@@ -89,12 +89,14 @@ class Land:
                         return True
         return False
 
-    def has_nature_nearby(self):
-        for x in range(2 * self.T):
-            for y in range(2 * self.T):
+    def obstructs_access_to_nature(self):
+        #TODO this is not working
+        for x in range(self.size_x):
+            for y in range(self.size_y):
                 if self.map[x][y].is_nature:
                     if d(x, y, self.T, self.T) <= self.T:
                         return True
+
         return False
 
     def is_nature_extended(self, x, y):
@@ -107,7 +109,7 @@ class Land:
             xy_label = labels[x, y]
             size_of_region = np.where(labels == xy_label, True, False).sum()
             # print(size_of_region)
-            return size_of_region >= self.minimum_area + 1 or size_of_region < self.minimum_area
+            return size_of_region >= self.minimum_area + 1 #or size_of_region < self.minimum_area
 
     def update_map(self):
         np.random.seed(42)
@@ -122,6 +124,7 @@ class Land:
                         if neighborhood.has_centrality_nearby():
                             if self.is_nature_extended(x, y):
                                 if np.random.rand() > self.probability:
-                                    block.is_nature = False
-                                    block.is_built = True
+                                    #if not self.obstructs_access_to_nature():
+                                        block.is_nature = False
+                                        block.is_built = True
 
