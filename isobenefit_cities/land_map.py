@@ -1,5 +1,6 @@
-import numpy as np
 import copy
+
+import numpy as np
 from scipy.ndimage.measurements import label
 
 
@@ -17,6 +18,7 @@ class MapBlock:
         self.is_centrality = False
         self.built_size = 0
         self.nature_size = 0
+
 
 class Land:
     def __init__(self, size_x, size_y, probability=0.5, T=10, minimum_area=100, boundary_conditions='reflect'):
@@ -66,8 +68,8 @@ class Land:
             self.map[x][y].is_nature = False
 
     def get_neighborhood(self, x, y):
-        neighborhood = Land(2 * self.T +1, 2 * self.T+1)
-        for i in range(x - self.T , x + self.T + 1):
+        neighborhood = Land(2 * self.T + 1, 2 * self.T + 1)
+        for i in range(x - self.T, x + self.T + 1):
             for j in range(y - self.T, y + self.T + 1):
                 i2, j2 = self.boundary_transform(i, j)
                 try:
@@ -90,7 +92,7 @@ class Land:
         return False
 
     def obstructs_access_to_nature(self):
-        #TODO this is not working
+        # TODO this is not working
         for x in range(self.size_x):
             for y in range(self.size_y):
                 if self.map[x][y].is_nature:
@@ -103,13 +105,20 @@ class Land:
         # this method assumes that x,y belongs to a natural region
         land_array = self.get_map_as_array()
         labels, num_features = label(land_array)
+        is_nature_extended = False
         if num_features == 1:
-            return True
+            is_nature_extended = True
         elif num_features > 1:
             xy_label = labels[x, y]
             size_of_region = np.where(labels == xy_label, True, False).sum()
             # print(size_of_region)
-            return size_of_region >= self.minimum_area + 1 #or size_of_region < self.minimum_area
+            is_nature_extended = (size_of_region >= self.minimum_area + 1)  # or size_of_region < self.minimum_area
+        # here we mock the fact that the block under consideration will be built
+        #  and check if the regions of nature created are smaller than the critical size
+        land_array[x, y] = 0
+        labels_after, num_features_after = label(land_array)
+        nature_sizes = [np.where(labels_after == l, True, False).sum() for l in range(1, num_features_after + 1)]
+        return is_nature_extended and min(nature_sizes) >= self.minimum_area + 1
 
     def update_map(self):
         np.random.seed(42)
@@ -124,7 +133,6 @@ class Land:
                         if neighborhood.has_centrality_nearby():
                             if self.is_nature_extended(x, y):
                                 if np.random.rand() > self.probability:
-                                    #if not self.obstructs_access_to_nature():
-                                        block.is_nature = False
-                                        block.is_built = True
-
+                                    # if not self.obstructs_access_to_nature():
+                                    block.is_nature = False
+                                    block.is_built = True
