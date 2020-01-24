@@ -105,7 +105,6 @@ class Land:
         elif num_features > 1:
             xy_label = labels[x, y]
             size_of_region = np.where(labels == xy_label, True, False).sum()
-            # print(size_of_region)
             is_nature_extended = (size_of_region >= self.minimum_area + 1)  # or size_of_region < self.minimum_area
         # here we mock the fact that the block under consideration will be built
         #  and check if the regions of nature created are smaller than the critical size
@@ -114,8 +113,17 @@ class Land:
         nature_sizes = [np.where(labels_after == l, True, False).sum() for l in range(1, num_features_after + 1)]
         return is_nature_extended and min(nature_sizes) >= self.minimum_area + 1
 
+    def is_nature_reachable(self, x, y):
+        land_array = self.get_map_as_array()
+        land_array[x,y] = 0
+        x_built, y_built = np.where(land_array == 0)
+        x_nature, y_nature = np.where(land_array == 1)
+        return np.sqrt((x_built[:, None] - x_nature) ** 2 + (y_built[:, None] - y_nature) ** 2).min(axis=1).max() <= self.T
+
+
+
+
     def update_map(self):
-        #np.random.seed(42)
         copy_land = copy.deepcopy(self)
         for x in range(self.size_x):
             for y in range(self.size_y):
@@ -127,5 +135,6 @@ class Land:
                         if neighborhood.has_centrality_nearby():
                             if self.is_nature_extended(x, y):
                                 if np.random.rand() > self.probability:
-                                    block.is_nature = False
-                                    block.is_built = True
+                                    if self.is_nature_reachable(x,y):
+                                        block.is_nature = False
+                                        block.is_built = True
