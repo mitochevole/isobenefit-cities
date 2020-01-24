@@ -91,10 +91,9 @@ class Land:
                         if d(x, y, self.T, self.T) <= self.T:
                             return True
                 except Exception as e:
-                    print("invalid position: x={}, y={}".format(x,y))
+                    print("invalid position: x={}, y={}".format(x, y))
                     raise e
         return False
-
 
     def is_nature_extended(self, x, y):
         # this method assumes that x,y belongs to a natural region
@@ -116,7 +115,7 @@ class Land:
         return is_nature_extended and min(nature_sizes) >= self.minimum_area + 1
 
     def update_map(self):
-        np.random.seed(42)
+        #np.random.seed(42)
         copy_land = copy.deepcopy(self)
         for x in range(self.size_x):
             for y in range(self.size_y):
