@@ -68,7 +68,7 @@ class Land:
             self.map[x][y].is_nature = False
 
     def get_neighborhood(self, x, y):
-        neighborhood = Land(2 * self.T + 1, 2 * self.T + 1)
+        neighborhood = Land(size_x=2 * self.T + 1, size_y=2 * self.T + 1, T=self.T)
         for i in range(x - self.T, x + self.T + 1):
             for j in range(y - self.T, y + self.T + 1):
                 i2, j2 = self.boundary_transform(i, j)
@@ -84,22 +84,17 @@ class Land:
                 self.map[x][y + 1].is_built)
 
     def has_centrality_nearby(self):
-        for x in range(2 * self.T):
-            for y in range(2 * self.T):
-                if self.map[x][y].is_centrality:
-                    if d(x, y, self.T, self.T) <= self.T:
-                        return True
-        return False
-
-    def obstructs_access_to_nature(self):
-        # TODO this is not working
         for x in range(self.size_x):
             for y in range(self.size_y):
-                if self.map[x][y].is_nature:
-                    if d(x, y, self.T, self.T) <= self.T:
-                        return True
-
+                try:
+                    if self.map[x][y].is_centrality:
+                        if d(x, y, self.T, self.T) <= self.T:
+                            return True
+                except Exception as e:
+                    print("invalid position: x={}, y={}".format(x,y))
+                    raise e
         return False
+
 
     def is_nature_extended(self, x, y):
         # this method assumes that x,y belongs to a natural region
@@ -133,6 +128,5 @@ class Land:
                         if neighborhood.has_centrality_nearby():
                             if self.is_nature_extended(x, y):
                                 if np.random.rand() > self.probability:
-                                    # if not self.obstructs_access_to_nature():
                                     block.is_nature = False
                                     block.is_built = True
