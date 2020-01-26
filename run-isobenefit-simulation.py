@@ -9,7 +9,7 @@ from isobenefit_cities.land_map import Land, MapBlock
 from simulation_config import AMENITIES_COORDINATES
 
 
-def main(size_x, size_y, n_steps, output_path, boundary_conditions, probability, T, minimum_area, random_seed):
+def main(size_x, size_y, n_steps, output_path, boundary_conditions, probability, T, minimum_area, random_seed, input_filepath):
     np.random.seed(random_seed)
     if output_path is None:
         timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
@@ -18,7 +18,7 @@ def main(size_x, size_y, n_steps, output_path, boundary_conditions, probability,
     t_zero = time.time()
     amenities_list = AMENITIES_COORDINATES
     land = initialize_land(size_x, size_y, amenities_list=amenities_list, boundary_conditions=boundary_conditions,
-                           probability=probability, T=T, minimum_area=minimum_area)
+                           probability=probability, T=T, minimum_area=minimum_area, filepath=input_filepath)
 
     canvas = np.ones(shape=(size_x, size_y)) * 0.5
     update_map_snapshot(land, canvas)
@@ -118,6 +118,11 @@ def create_arg_parser():
                         default=42,
                         help="for reproducibility set a specific random seed")
 
+    parser.add_argument('--input-filepath',
+                        required=False,
+                        type=str,
+                        help="image filepath for initial configuration")
+
     return parser
 
 
@@ -133,7 +138,8 @@ if __name__ == "__main__":
     T = args.T
     minimum_area = args.minimum_area
     random_seed = args.random_seed
+    input_filepath = args.input_filepath
 
     main(size_x=size_x, size_y=size_y, n_steps=n_steps, output_path=output_path,
          boundary_conditions=boundary_conditions, probability=probability, T=T, minimum_area=minimum_area,
-         random_seed=random_seed)
+         random_seed=random_seed, input_filepath=input_filepath)
