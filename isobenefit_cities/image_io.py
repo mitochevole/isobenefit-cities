@@ -4,7 +4,7 @@ from matplotlib import cm
 
 def import_2Darray_from_image(filepath):
     pic = Image.open(filepath)
-    data = np.array(pic.getdata()).reshape(pic.size[0], pic.size[1], -1).mean(axis=2)
+    data = np.array(pic.getdata()).reshape(pic.size[1], pic.size[0], -1).mean(axis=2)
     data_rescaled = (data - data.min()) / (data.max() - data.min())
     return data_rescaled
 

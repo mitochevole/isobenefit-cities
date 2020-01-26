@@ -140,6 +140,7 @@ class Land:
                 block = self.map[x][y]
                 assert (block.is_nature and not block.is_built) or (
                             block.is_built and not block.is_nature), f"({x},{y}) block has ambiguous coordinates"
+
                 if block.is_nature:
                     neighborhood = copy_land.get_neighborhood(x, y)
                     if neighborhood.is_any_neighbor_built(self.T, self.T):
@@ -149,6 +150,7 @@ class Land:
                                     if self.is_nature_reachable(x, y):
                                         block.is_nature = False
                                         block.is_built = True
+                                        #print(f"updated block at {block.x},{block.y}")
 
     def set_configuration_from_image(self, filepath):
         array_map = import_2Darray_from_image(filepath)
@@ -164,3 +166,4 @@ class Land:
                     self.map[x][y].is_built = True
                     self.map[x][y].is_centrality = False
                     self.map[x][y].is_nature = False
+

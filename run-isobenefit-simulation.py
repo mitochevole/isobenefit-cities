@@ -16,8 +16,8 @@ def main(size_x, size_y, n_steps, output_path, boundary_conditions, probability,
         output_path = f"simulations/{timestamp}"
     os.makedirs(output_path)
     t_zero = time.time()
-    amenities_list = AMENITIES_COORDINATES
-    land = initialize_land(size_x, size_y, amenities_list=amenities_list, boundary_conditions=boundary_conditions,
+
+    land = initialize_land(size_x, size_y, amenities_list=AMENITIES_COORDINATES, boundary_conditions=boundary_conditions,
                            probability=probability, T=T, minimum_area=minimum_area, mode=initialization_mode, filepath=input_filepath)
 
     canvas = np.ones(shape=(size_x, size_y)) * 0.5
@@ -34,6 +34,7 @@ def main(size_x, size_y, n_steps, output_path, boundary_conditions, probability,
 
 def initialize_land(size_x, size_y, boundary_conditions, probability, T, minimum_area, mode=None, filepath=None,
                     amenities_list=None):
+
     land = Land(size_x=size_x, size_y=size_y, boundary_conditions=boundary_conditions,
                 probability=probability, T=T, minimum_area=minimum_area)
     if mode == 'image' and filepath is not None:
@@ -51,9 +52,9 @@ def update_map_snapshot(land, canvas):
     for row in land.map:
         for block in row:
             if block.is_built:
-                canvas[block.x, block.y] = 0
+                canvas[block.y, block.x] = 0
             if block.is_centrality:
-                canvas[block.x, block.y] = 1
+                canvas[block.y, block.x] = 1
 
 
 def save_snapshot(canvas, output_path, step, format='png'):
@@ -124,6 +125,12 @@ def create_arg_parser():
                         type=str,
                         help="image filepath for initial configuration")
 
+    parser.add_argument('--initialization-mode',
+                        required=False,
+                        type=str,
+                        default='image',
+                        help="initial configuration can be set via in input image or via a script")
+
     return parser
 
 
@@ -140,7 +147,8 @@ if __name__ == "__main__":
     minimum_area = args.minimum_area
     random_seed = args.random_seed
     input_filepath = args.input_filepath
+    initialization_mode = args.initialization_mode
 
     main(size_x=size_x, size_y=size_y, n_steps=n_steps, output_path=output_path,
          boundary_conditions=boundary_conditions, probability=probability, T=T, minimum_area=minimum_area,
-         random_seed=random_seed, input_filepath=input_filepath)
+         random_seed=random_seed, input_filepath=input_filepath, initialization_mode=initialization_mode)
