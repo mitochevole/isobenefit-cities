@@ -1,7 +1,9 @@
 import copy
 
 import numpy as np
+from matplotlib import cm
 from scipy.ndimage.measurements import label
+from isobenefit_cities.image_io import save_image_from_2Darray
 
 
 def d(x1, y1, x2, y2):
@@ -16,8 +18,6 @@ class MapBlock:
         self.is_nature = True
         self.is_built = False
         self.is_centrality = False
-        self.built_size = 0
-        self.nature_size = 0
 
 
 class Land:
@@ -59,6 +59,10 @@ class Land:
                 if self.map[x][y].is_built:
                     A[x, y] = 0
         return A
+
+    def save_land(self, filepath, color_map=cm.gist_earth, format='png'):
+        land = self.get_map_as_array()
+        save_image_from_2Darray(normalized_data_array=land, filepath=filepath, color_map=color_map, format=format)
 
     def set_centralities(self, centralities: list):
         for centrality in centralities:
@@ -115,13 +119,11 @@ class Land:
 
     def is_nature_reachable(self, x, y):
         land_array = self.get_map_as_array()
-        land_array[x,y] = 0
+        land_array[x, y] = 0
         x_built, y_built = np.where(land_array == 0)
         x_nature, y_nature = np.where(land_array == 1)
-        return np.sqrt((x_built[:, None] - x_nature) ** 2 + (y_built[:, None] - y_nature) ** 2).min(axis=1).max() <= self.T
-
-
-
+        return np.sqrt((x_built[:, None] - x_nature) ** 2 + (y_built[:, None] - y_nature) ** 2).min(
+            axis=1).max() <= self.T
 
     def update_map(self):
         copy_land = copy.deepcopy(self)
@@ -135,6 +137,6 @@ class Land:
                         if neighborhood.has_centrality_nearby():
                             if self.is_nature_extended(x, y):
                                 if np.random.rand() > self.probability:
-                                    if self.is_nature_reachable(x,y):
+                                    if self.is_nature_reachable(x, y):
                                         block.is_nature = False
                                         block.is_built = True
