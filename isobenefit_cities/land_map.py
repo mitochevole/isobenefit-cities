@@ -3,7 +3,7 @@ import copy
 import numpy as np
 from matplotlib import cm
 from scipy.ndimage.measurements import label
-from isobenefit_cities.image_io import save_image_from_2Darray
+from isobenefit_cities.image_io import save_image_from_2Darray, import_2Darray_from_image
 
 
 def d(x1, y1, x2, y2):
@@ -31,7 +31,7 @@ class Land:
         self.probability = probability
 
     def boundary_transform(self, i, j):
-        if self.boundary_conditions == 'reflect':
+        if self.boundary_conditions == 'mirror':
             if i < 0:
                 i = -i
             if j < 0:
@@ -62,7 +62,7 @@ class Land:
 
     def save_land(self, filepath, color_map=cm.gist_earth, format='png'):
         land = self.get_map_as_array()
-        save_image_from_2Darray(normalized_data_array=land, filepath=filepath, color_map=color_map, format=format)
+        save_image_from_2Darray(land_array=land, filepath=filepath, color_map=color_map, format=format)
 
     def set_centralities(self, centralities: list):
         for centrality in centralities:
@@ -140,3 +140,17 @@ class Land:
                                     if self.is_nature_reachable(x, y):
                                         block.is_nature = False
                                         block.is_built = True
+
+    def set_configuration_from_image(self, filepath):
+        array_map = import_2Darray_from_image(filepath)
+        for x in range(self.size_x):
+            for y in range(self.size_y):
+                if array_map[x,y] == 1:
+                    self.map[x][y].is_built = True
+                    self.map[x][y].is_centrality = True
+
+                if array_map[x, y] == 0:
+                    self.map[x][y].is_built = True
+                    self.map[x][y].is_centrality = False
+
+

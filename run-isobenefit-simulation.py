@@ -2,9 +2,9 @@ import argparse
 import os
 import time
 
-import matplotlib.pyplot as plt
 import numpy as np
 
+from isobenefit_cities.image_io import save_image_from_2Darray
 from isobenefit_cities.land_map import Land, MapBlock
 from simulation_config import AMENITIES_COORDINATES
 
@@ -17,9 +17,10 @@ def main(size_x, size_y, n_steps, output_path, boundary_conditions, probability,
     os.makedirs(output_path)
     t_zero = time.time()
     amenities_list = AMENITIES_COORDINATES
-    land = initialize_land(size_x, size_y, amenities_list, boundary_conditions=boundary_conditions,
+    land = initialize_land(size_x, size_y, amenities_list=amenities_list, boundary_conditions=boundary_conditions,
                            probability=probability, T=T, minimum_area=minimum_area)
-    canvas = np.zeros(shape=(size_x, size_y))
+
+    canvas = np.ones(shape=(size_x, size_y)) * 0.5
     update_map_snapshot(land, canvas)
     save_snapshot(canvas, output_path=output_path, step=0)
     for i in range(n_steps):
@@ -31,11 +32,17 @@ def main(size_x, size_y, n_steps, output_path, boundary_conditions, probability,
     print(f"Simulation ended. Total duration: {time.time()-t_zero} seconds")
 
 
-def initialize_land(size_x, size_y, amenities_list, boundary_conditions, probability, T, minimum_area):
+def initialize_land(size_x, size_y, boundary_conditions, probability, T, minimum_area, mode=None, filepath=None,
+                    amenities_list=None):
     land = Land(size_x=size_x, size_y=size_y, boundary_conditions=boundary_conditions,
                 probability=probability, T=T, minimum_area=minimum_area)
-    amenities = [MapBlock(x, y) for (x, y) in amenities_list]
-    land.set_centralities(amenities)
+    if mode == 'image' and filepath is not None:
+        land.set_configuration_from_image(filepath)
+    elif mode == 'list':
+        amenities = [MapBlock(x, y) for (x, y) in amenities_list]
+        land.set_centralities(amenities)
+    else:
+        raise Exception('Invalid initialization mode. Valid modes are "image" and "list".')
     return land
 
 
@@ -43,17 +50,14 @@ def update_map_snapshot(land, canvas):
     for row in land.map:
         for block in row:
             if block.is_built:
-                canvas[block.x, block.y] = 1
+                canvas[block.x, block.y] = 0
             if block.is_centrality:
-                canvas[block.x, block.y] = 2
+                canvas[block.x, block.y] = 1
 
 
 def save_snapshot(canvas, output_path, step, format='png'):
-    if format == 'png':
-        plt.imshow(canvas)
-        plt.axis('off')
-        final_path = os.path.join(output_path, f"{step}.png")
-        plt.savefig(final_path)
+    final_path = os.path.join(output_path, f"{step:03d}.png")
+    save_image_from_2Darray(canvas, filepath=final_path, format=format)
 
 
 def create_arg_parser():
@@ -105,8 +109,8 @@ def create_arg_parser():
     parser.add_argument('--boundary-conditions',
                         required=False,
                         type=str,
-                        default='reflect',
-                        help="the boundary conditions of the land, possible options are 'reflect' and 'periodic'")
+                        default='mirror',
+                        help="the boundary conditions of the land, possible options are 'mirror' and 'periodic'")
 
     parser.add_argument('--random-seed',
                         required=False,
@@ -131,4 +135,5 @@ if __name__ == "__main__":
     random_seed = args.random_seed
 
     main(size_x=size_x, size_y=size_y, n_steps=n_steps, output_path=output_path,
-         boundary_conditions=boundary_conditions, probability=probability, T=T, minimum_area=minimum_area, random_seed=random_seed)
+         boundary_conditions=boundary_conditions, probability=probability, T=T, minimum_area=minimum_area,
+         random_seed=random_seed)

@@ -13,7 +13,9 @@ def plot_image_from_2Darray(normalized_data_array, color_map=cm.gist_earth):
     img = Image.fromarray(data_mapped)
     img.show()
 
-def save_image_from_2Darray(normalized_data_array, filepath, color_map=cm.gist_earth, format='png'):
-    data_mapped = np.uint8(255 * color_map(normalized_data_array))
+def save_image_from_2Darray(land_array, filepath, color_map=cm.gist_earth, format='png'):
+    normalized_land_array = (land_array - land_array.min()) / (land_array.max() - land_array.min())
+    data_mapped = np.uint8(255 * color_map(normalized_land_array))
     img = Image.fromarray(data_mapped)
     img.save(filepath, format=format)
+
