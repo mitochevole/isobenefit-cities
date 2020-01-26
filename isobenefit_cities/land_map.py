@@ -3,6 +3,7 @@ import copy
 import numpy as np
 from matplotlib import cm
 from scipy.ndimage.measurements import label
+
 from isobenefit_cities.image_io import save_image_from_2Darray, import_2Darray_from_image
 
 
@@ -51,6 +52,13 @@ class Land:
             if j >= self.size_y:
                 j = j - self.size_y
         return i, j
+
+    def check_consistency(self):
+        for x in range(self.size_x):
+            for y in range(self.size_y):
+                block = self.map[x][y]
+                assert (block.is_nature and not block.is_built) or (
+                        block.is_built and not block.is_nature), f"({x},{y}) block has ambiguous coordinates"
 
     def get_map_as_array(self):
         A = np.ones(shape=(self.size_x, self.size_y))
@@ -130,7 +138,8 @@ class Land:
         for x in range(self.size_x):
             for y in range(self.size_y):
                 block = self.map[x][y]
-                assert (block.is_nature and not block.is_built) or (block.is_built and not block.is_nature)
+                assert (block.is_nature and not block.is_built) or (
+                            block.is_built and not block.is_nature), f"({x},{y}) block has ambiguous coordinates"
                 if block.is_nature:
                     neighborhood = copy_land.get_neighborhood(x, y)
                     if neighborhood.is_any_neighbor_built(self.T, self.T):
@@ -145,12 +154,13 @@ class Land:
         array_map = import_2Darray_from_image(filepath)
         for x in range(self.size_x):
             for y in range(self.size_y):
-                if array_map[x,y] == 1:
+                if array_map[x, y] == 1:
                     self.map[x][y].is_built = True
                     self.map[x][y].is_centrality = True
+                    self.map[x][y].is_nature = False
+
 
                 if array_map[x, y] == 0:
                     self.map[x][y].is_built = True
                     self.map[x][y].is_centrality = False
-
-
+                    self.map[x][y].is_nature = False

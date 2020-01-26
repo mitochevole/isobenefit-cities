@@ -9,7 +9,7 @@ from isobenefit_cities.land_map import Land, MapBlock
 from simulation_config import AMENITIES_COORDINATES
 
 
-def main(size_x, size_y, n_steps, output_path, boundary_conditions, probability, T, minimum_area, random_seed, input_filepath):
+def main(size_x, size_y, n_steps, output_path, boundary_conditions, probability, T, minimum_area, random_seed, input_filepath, initialization_mode='image'):
     np.random.seed(random_seed)
     if output_path is None:
         timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
@@ -18,7 +18,7 @@ def main(size_x, size_y, n_steps, output_path, boundary_conditions, probability,
     t_zero = time.time()
     amenities_list = AMENITIES_COORDINATES
     land = initialize_land(size_x, size_y, amenities_list=amenities_list, boundary_conditions=boundary_conditions,
-                           probability=probability, T=T, minimum_area=minimum_area, filepath=input_filepath)
+                           probability=probability, T=T, minimum_area=minimum_area, mode=initialization_mode, filepath=input_filepath)
 
     canvas = np.ones(shape=(size_x, size_y)) * 0.5
     update_map_snapshot(land, canvas)
@@ -43,6 +43,7 @@ def initialize_land(size_x, size_y, boundary_conditions, probability, T, minimum
         land.set_centralities(amenities)
     else:
         raise Exception('Invalid initialization mode. Valid modes are "image" and "list".')
+    land.check_consistency()
     return land
 
 
