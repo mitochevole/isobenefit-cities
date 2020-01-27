@@ -4,12 +4,16 @@ import time
 
 import numpy as np
 
+from isobenefit_cities import logger
 from isobenefit_cities.image_io import save_image_from_2Darray
 from isobenefit_cities.land_map import Land, MapBlock
 from simulation_config import AMENITIES_COORDINATES
 
+LOGGER = logger.get_logger()
 
-def main(size_x, size_y, n_steps, output_path, boundary_conditions, probability, T, minimum_area, random_seed, input_filepath, initialization_mode='image'):
+
+def main(size_x, size_y, n_steps, output_path, boundary_conditions, probability, T, minimum_area, random_seed,
+         input_filepath, initialization_mode):
     np.random.seed(random_seed)
     if output_path is None:
         timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
@@ -17,8 +21,10 @@ def main(size_x, size_y, n_steps, output_path, boundary_conditions, probability,
     os.makedirs(output_path)
     t_zero = time.time()
 
-    land = initialize_land(size_x, size_y, amenities_list=AMENITIES_COORDINATES, boundary_conditions=boundary_conditions,
-                           probability=probability, T=T, minimum_area=minimum_area, mode=initialization_mode, filepath=input_filepath)
+    land = initialize_land(size_x, size_y, amenities_list=AMENITIES_COORDINATES,
+                           boundary_conditions=boundary_conditions,
+                           probability=probability, T=T, minimum_area=minimum_area, mode=initialization_mode,
+                           filepath=input_filepath)
 
     canvas = np.ones(shape=(size_x, size_y)) * 0.5
     update_map_snapshot(land, canvas)
@@ -26,15 +32,14 @@ def main(size_x, size_y, n_steps, output_path, boundary_conditions, probability,
     for i in range(n_steps):
         start = time.time()
         land.update_map()
-        print(f"step: {i}, duration: {time.time() - start} seconds")
+        LOGGER.info(f"step: {i}, duration: {time.time() - start} seconds")
         update_map_snapshot(land, canvas)
         save_snapshot(canvas, output_path=output_path, step=i + 1)
-    print(f"Simulation ended. Total duration: {time.time()-t_zero} seconds")
+    LOGGER.info(f"Simulation ended. Total duration: {time.time()-t_zero} seconds")
 
 
 def initialize_land(size_x, size_y, boundary_conditions, probability, T, minimum_area, mode=None, filepath=None,
                     amenities_list=None):
-
     land = Land(size_x=size_x, size_y=size_y, boundary_conditions=boundary_conditions,
                 probability=probability, T=T, minimum_area=minimum_area)
     if mode == 'image' and filepath is not None:
@@ -126,10 +131,9 @@ def create_arg_parser():
                         help="image filepath for initial configuration")
 
     parser.add_argument('--initialization-mode',
-                        required=False,
+                        required=True,
                         type=str,
-                        default='image',
-                        help="initial configuration can be set via in input image or via a script")
+                        help="initial configuration can be set via an input image or via a list of initial centralities")
 
     return parser
 
@@ -148,7 +152,7 @@ if __name__ == "__main__":
     random_seed = args.random_seed
     input_filepath = args.input_filepath
     initialization_mode = args.initialization_mode
-
+    LOGGER.info(args)
     main(size_x=size_x, size_y=size_y, n_steps=n_steps, output_path=output_path,
          boundary_conditions=boundary_conditions, probability=probability, T=T, minimum_area=minimum_area,
          random_seed=random_seed, input_filepath=input_filepath, initialization_mode=initialization_mode)
