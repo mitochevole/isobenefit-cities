@@ -6,13 +6,14 @@ import numpy as np
 
 from isobenefit_cities import logger
 from isobenefit_cities.image_io import save_image_from_2Darray
+from isobenefit_cities.initialization_utils import get_random_coordinates
 from isobenefit_cities.land_map import Land, MapBlock
-from simulation_config import AMENITIES_COORDINATES
 
 LOGGER = logger.get_logger()
+N_AMENITIES = 20
 
 
-def main(size_x, size_y, n_steps, output_path, boundary_conditions, probability, T, minimum_area, random_seed,
+def main(size_x, size_y, n_steps, output_path, boundary_conditions, probability, T_star, minimum_area, random_seed,
          input_filepath, initialization_mode):
     np.random.seed(random_seed)
     if output_path is None:
@@ -21,9 +22,11 @@ def main(size_x, size_y, n_steps, output_path, boundary_conditions, probability,
     os.makedirs(output_path)
     t_zero = time.time()
 
-    land = initialize_land(size_x, size_y, amenities_list=AMENITIES_COORDINATES,
+    land = initialize_land(size_x, size_y,
+                           amenities_list=get_random_coordinates(size_x=size_x, size_y=size_y, n_amenities=N_AMENITIES,
+                                                                 seed=random_seed),
                            boundary_conditions=boundary_conditions,
-                           probability=probability, T=T, minimum_area=minimum_area, mode=initialization_mode,
+                           probability=probability, T=T_star, minimum_area=minimum_area, mode=initialization_mode,
                            filepath=input_filepath)
 
     canvas = np.ones(shape=(size_x, size_y)) * 0.5
@@ -41,7 +44,7 @@ def main(size_x, size_y, n_steps, output_path, boundary_conditions, probability,
 def initialize_land(size_x, size_y, boundary_conditions, probability, T, minimum_area, mode=None, filepath=None,
                     amenities_list=None):
     land = Land(size_x=size_x, size_y=size_y, boundary_conditions=boundary_conditions,
-                probability=probability, T=T, minimum_area=minimum_area)
+                probability=probability, T_star=T, minimum_area=minimum_area)
     if mode == 'image' and filepath is not None:
         land.set_configuration_from_image(filepath)
     elif mode == 'list':
@@ -154,5 +157,5 @@ if __name__ == "__main__":
     initialization_mode = args.initialization_mode
     LOGGER.info(args)
     main(size_x=size_x, size_y=size_y, n_steps=n_steps, output_path=output_path,
-         boundary_conditions=boundary_conditions, probability=probability, T=T, minimum_area=minimum_area,
+         boundary_conditions=boundary_conditions, probability=probability, T_star=T, minimum_area=minimum_area,
          random_seed=random_seed, input_filepath=input_filepath, initialization_mode=initialization_mode)

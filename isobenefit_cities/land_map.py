@@ -22,10 +22,10 @@ class MapBlock:
 
 
 class Land:
-    def __init__(self, size_x, size_y, probability=0.5, T=10, minimum_area=100, boundary_conditions='mirror'):
+    def __init__(self, size_x, size_y, probability=0.5, T_star=10, minimum_area=100, boundary_conditions='mirror'):
         self.size_x = size_x
         self.size_y = size_y
-        self.T = T
+        self.T_star = T_star
         self.map = [[MapBlock(x, y) for x in range(size_y)] for y in range(size_x)]
         self.boundary_conditions = boundary_conditions
         self.minimum_area = minimum_area
@@ -58,14 +58,14 @@ class Land:
             self.map[x][y].is_nature = False
 
     def get_neighborhood(self, x, y):
-        neighborhood = Land(size_x=2 * self.T + 1, size_y=2 * self.T + 1, T=self.T)
-        for i in range(x - self.T, x + self.T + 1):
-            for j in range(y - self.T, y + self.T + 1):
+        neighborhood = Land(size_x=2 * self.T_star + 1, size_y=2 * self.T_star + 1, T_star=self.T_star)
+        for i in range(x - self.T_star, x + self.T_star + 1):
+            for j in range(y - self.T_star, y + self.T_star + 1):
                 i2, j2 = self.boundary_transform(i, j)
                 try:
-                    neighborhood.map[i + self.T - x][j + self.T - y] = self.map[i2][j2]
+                    neighborhood.map[i + self.T_star - x][j + self.T_star - y] = self.map[i2][j2]
                 except Exception as e:
-                    print("i: {}, j: {}, i2: {}, j2: {}, x: {}, y: {}, T: {}".format(i, j, i2, j2, x, y, self.T))
+                    print("i: {}, j: {}, i2: {}, j2: {}, x: {}, y: {}, T: {}".format(i, j, i2, j2, x, y, self.T_star))
                     raise e
         return neighborhood
 
@@ -100,7 +100,7 @@ class Land:
             for y in range(self.size_y):
                 try:
                     if self.map[x][y].is_centrality:
-                        if d(x, y, self.T, self.T) <= self.T:
+                        if d(x, y, self.T_star, self.T_star) <= self.T_star:
                             return True
                 except Exception as e:
                     print("invalid position: x={}, y={}".format(x, y))
@@ -131,7 +131,7 @@ class Land:
         x_built, y_built = np.where(land_array == 0)
         x_nature, y_nature = np.where(land_array == 1)
         return np.sqrt((x_built[:, None] - x_nature) ** 2 + (y_built[:, None] - y_nature) ** 2).min(
-            axis=1).max() <= self.T
+            axis=1).max() <= self.T_star
 
     def update_map(self):
         copy_land = copy.deepcopy(self)
@@ -142,7 +142,7 @@ class Land:
                         block.is_built and not block.is_nature), f"({x},{y}) block has ambiguous coordinates"
                 if block.is_nature:
                     neighborhood = copy_land.get_neighborhood(x, y)
-                    if neighborhood.is_any_neighbor_built(self.T, self.T):
+                    if neighborhood.is_any_neighbor_built(self.T_star, self.T_star):
                         if neighborhood.has_centrality_nearby():
                             if self.is_nature_extended(x, y):
                                 if np.random.rand() < self.probability:
