@@ -22,7 +22,7 @@ class MapBlock:
 
 
 class Land:
-    def __init__(self, size_x, size_y, probability=0.5, T=10, minimum_area=100, boundary_conditions='reflect'):
+    def __init__(self, size_x, size_y, probability=0.5, T=10, minimum_area=100, boundary_conditions='mirror'):
         self.size_x = size_x
         self.size_y = size_y
         self.T = T
@@ -30,28 +30,6 @@ class Land:
         self.boundary_conditions = boundary_conditions
         self.minimum_area = minimum_area
         self.probability = probability
-
-    def boundary_transform(self, i, j):
-        if self.boundary_conditions == 'mirror':
-            if i < 0:
-                i = -i
-            if j < 0:
-                j = -j
-            if i >= self.size_x:
-                i = self.size_x - i % self.size_x - 1
-            if j >= self.size_y:
-                j = self.size_y - j % self.size_y - 1
-
-        if self.boundary_conditions == 'periodic':
-            if i < 0:
-                i = self.size_x + i
-            if j < 0:
-                j = self.size_y + j
-            if i >= self.size_x:
-                i = i - self.size_x
-            if j >= self.size_y:
-                j = j - self.size_y
-        return i, j
 
     def check_consistency(self):
         for x in range(self.size_x):
@@ -90,6 +68,28 @@ class Land:
                     print("i: {}, j: {}, i2: {}, j2: {}, x: {}, y: {}, T: {}".format(i, j, i2, j2, x, y, self.T))
                     raise e
         return neighborhood
+
+    def boundary_transform(self, i, j):
+        if self.boundary_conditions == 'mirror':
+            if i < 0:
+                i = -i
+            if j < 0:
+                j = -j
+            if i >= self.size_x:
+                i = self.size_x - i % self.size_x - 1
+            if j >= self.size_y:
+                j = self.size_y - j % self.size_y - 1
+
+        if self.boundary_conditions == 'periodic':
+            if i < 0:
+                i = self.size_x + i
+            if j < 0:
+                j = self.size_y + j
+            if i >= self.size_x:
+                i = i - self.size_x
+            if j >= self.size_y:
+                j = j - self.size_y
+        return i, j
 
     def is_any_neighbor_built(self, x, y):
         return (self.map[x - 1][y].is_built or self.map[x + 1][y].is_built or self.map[x][y - 1].is_built or
@@ -140,7 +140,6 @@ class Land:
                 block = self.map[x][y]
                 assert (block.is_nature and not block.is_built) or (
                         block.is_built and not block.is_nature), f"({x},{y}) block has ambiguous coordinates"
-
                 if block.is_nature:
                     neighborhood = copy_land.get_neighborhood(x, y)
                     if neighborhood.is_any_neighbor_built(self.T, self.T):
