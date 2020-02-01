@@ -149,6 +149,17 @@ class Land:
                                     if self.is_nature_reachable(x, y):
                                         block.is_nature = False
                                         block.is_built = True
+                        else:
+                            if np.random.rand() < 1.e-3:
+                                block.is_centrality = True
+                                block.is_built = True
+                                block.is_nature = False
+
+                    else:
+                        if np.random.rand() < 1/(self.size_x*self.size_y*10):
+                            block.is_centrality = True
+                            block.is_built = True
+                            block.is_nature = False
 
     def set_configuration_from_image(self, filepath):
         array_map = import_2Darray_from_image(filepath)
