@@ -54,5 +54,6 @@ def configure_logging(console_only=False):
     pass
 
 
-def get_logger():
+def get_logger(console_only=False):
+    configure_logging(console_only=console_only)
     return logging.getLogger(LOG_FILENAME)

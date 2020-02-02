@@ -6,10 +6,12 @@ import numpy as np
 
 from isobenefit_cities import logger
 from isobenefit_cities.image_io import save_image_from_2Darray
-from isobenefit_cities.initialization_utils import get_random_coordinates, get_central_coord
+from isobenefit_cities.initialization_utils import get_central_coord
 from isobenefit_cities.land_map import Land, MapBlock
 
+logger.configure_logging()
 LOGGER = logger.get_logger()
+
 N_AMENITIES = 1
 
 
@@ -23,7 +25,7 @@ def main(size_x, size_y, n_steps, output_path, boundary_conditions, probability,
     t_zero = time.time()
 
     land = initialize_land(size_x, size_y,
-                           #amenities_list=get_random_coordinates(size_x=size_x, size_y=size_y, n_amenities=N_AMENITIES, seed=random_seed),
+                           # amenities_list=get_random_coordinates(size_x=size_x, size_y=size_y, n_amenities=N_AMENITIES, seed=random_seed),
                            amenities_list=get_central_coord(size_x=size_x, size_y=size_y),
                            boundary_conditions=boundary_conditions,
                            probability=probability, T=T_star, minimum_area=minimum_area, mode=initialization_mode,

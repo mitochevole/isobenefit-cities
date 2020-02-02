@@ -5,8 +5,9 @@ import numpy as np
 from matplotlib import cm
 from scipy.ndimage.measurements import label
 
+from isobenefit_cities import logger
 from isobenefit_cities.image_io import save_image_from_2Darray, import_2Darray_from_image
-
+LOGGER = logger.get_logger()
 
 def d(x1, y1, x2, y2):
     # return abs(x1-x2) + abs(y1-y2)
@@ -150,6 +151,8 @@ class Land:
             axis=1).max() <= self.T_star
 
     def update_map(self):
+        added_blocks = 0
+        added_centrality = 0
         copy_land = copy.deepcopy(self)
         for x in range(self.size_x):
             for y in range(self.size_y):
@@ -165,12 +168,14 @@ class Land:
                                     if self.is_nature_reachable(x, y):
                                         block.is_nature = False
                                         block.is_built = True
+                                        added_blocks +=1
                         else:
                             if np.random.rand() < 1.e-2:
                                 if self.is_nature_extended(x, y):
                                     block.is_centrality = True
                                     block.is_built = True
                                     block.is_nature = False
+                                    added_centrality +=1
 
                     else:
                         if np.random.rand() < 1/(self.size_x*self.size_y*50):
@@ -178,6 +183,9 @@ class Land:
                                 block.is_centrality = True
                                 block.is_built = True
                                 block.is_nature = False
+                                added_centrality +=1
+        LOGGER.info(f"added blocks: {added_blocks}")
+        LOGGER.info(f"added centralities: {added_centrality}")
 
     def set_configuration_from_image(self, filepath):
         array_map = import_2Darray_from_image(filepath)
