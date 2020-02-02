@@ -1,4 +1,5 @@
 import copy
+from functools import partial
 
 import numpy as np
 from matplotlib import cm
@@ -11,6 +12,13 @@ def d(x1, y1, x2, y2):
     # return abs(x1-x2) + abs(y1-y2)
     return np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
+def is_nature_wide_along_axis(array_1d, T_star):
+    features, labels = label(array_1d)
+    unique, counts = np.unique(features, return_counts=True)
+    if len(counts)>1:
+        return counts[1:].min() >= T_star
+    else:
+        return True
 
 class MapBlock:
     def __init__(self, x, y):
@@ -110,20 +118,23 @@ class Land:
     def is_nature_extended(self, x, y):
         # this method assumes that x,y belongs to a natural region
         land_array = self.get_map_as_array()
-        labels, num_features = label(land_array)
-        is_nature_extended = False
-        if num_features == 1:
-            is_nature_extended = True
-        elif num_features > 1:
-            xy_label = labels[x, y]
-            size_of_region = np.where(labels == xy_label, True, False).sum()
-            is_nature_extended = (size_of_region >= self.minimum_area + 1)  # or size_of_region < self.minimum_area
-        # here we mock the fact that the block under consideration will be built
-        #  and check if the regions of nature created are smaller than the critical size
         land_array[x, y] = 0
-        labels_after, num_features_after = label(land_array)
-        nature_sizes = [np.where(labels_after == l, True, False).sum() for l in range(1, num_features_after + 1)]
-        return is_nature_extended and min(nature_sizes) >= self.minimum_area + 1
+        labels, num_features = label(land_array)
+        if num_features > 1:
+            return False
+        else:
+            is_wide_enough_height = np.apply_along_axis(partial(is_nature_wide_along_axis, T_star=self.T_star), axis=1, arr=land_array)
+            is_wide_enough_width = np.apply_along_axis(partial(is_nature_wide_along_axis, T_star=self.T_star), axis=0, arr=land_array)
+            narrow_places_h = len(is_wide_enough_height) - is_wide_enough_height.sum()
+            narrow_places_w = len(is_wide_enough_width) - is_wide_enough_width.sum()
+
+            return narrow_places_h < 10 and narrow_places_w < 10
+
+        #xy_label = labels[x, y]
+        #width_of_region = np.where(labels == xy_label, True, False).sum()
+        #labels_after, num_features_after = label(land_array)
+        #nature_sizes = [np.where(labels_after == l, True, False).sum() for l in range(1, num_features_after + 1)]
+
 
     def is_nature_reachable(self, x, y):
         land_array = self.get_map_as_array()
@@ -150,13 +161,13 @@ class Land:
                                         block.is_nature = False
                                         block.is_built = True
                         else:
-                            if np.random.rand() < 1.e-3:
+                            if np.random.rand() < 1.e-2:
                                 block.is_centrality = True
                                 block.is_built = True
                                 block.is_nature = False
 
                     else:
-                        if np.random.rand() < 1/(self.size_x*self.size_y*10):
+                        if np.random.rand() < -1:#1/(self.size_x*self.size_y*10):
                             block.is_centrality = True
                             block.is_built = True
                             block.is_nature = False
