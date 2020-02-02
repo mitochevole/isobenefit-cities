@@ -6,7 +6,7 @@ import os
 BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.path.pardir)
 sys.path.insert(0, BASE_DIR)
 LOGS_DIR = os.path.join(BASE_DIR, 'logs')
-LOG_FILENAME = 'isobenifit-cities.log'
+LOG_FILENAME = 'isobenefit-cities.log'
 
 LOGGING = {
     'version': 1,
@@ -31,7 +31,7 @@ LOGGING = {
         }
     },
     'loggers': {
-        'harvesting-2019': {
+        'isobenefit-cities': {
             'handlers': ['console', 'general_file'],
             'level': 'DEBUG',
         }
@@ -54,6 +54,5 @@ def configure_logging(console_only=False):
     pass
 
 
-def get_logger(console_only=False):
-    configure_logging(console_only=console_only)
+def get_logger():
     return logging.getLogger(LOG_FILENAME)

@@ -9,14 +9,14 @@ from isobenefit_cities.image_io import save_image_from_2Darray
 from isobenefit_cities.initialization_utils import get_central_coord
 from isobenefit_cities.land_map import Land, MapBlock
 
-logger.configure_logging()
-LOGGER = logger.get_logger()
 
 N_AMENITIES = 1
 
 
 def main(size_x, size_y, n_steps, output_path, boundary_conditions, probability, T_star, minimum_area, random_seed,
          input_filepath, initialization_mode):
+    logger.configure_logging()
+    LOGGER = logger.get_logger()
     np.random.seed(random_seed)
     if output_path is None:
         timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     random_seed = args.random_seed
     input_filepath = args.input_filepath
     initialization_mode = args.initialization_mode
-    LOGGER.info(args)
+   #LOGGER.info(args)
     main(size_x=size_x, size_y=size_y, n_steps=n_steps, output_path=output_path,
          boundary_conditions=boundary_conditions, probability=probability, T_star=T, minimum_area=minimum_area,
          random_seed=random_seed, input_filepath=input_filepath, initialization_mode=initialization_mode)
