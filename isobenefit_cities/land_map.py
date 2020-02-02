@@ -133,7 +133,7 @@ class Land:
         narrow_places_h = len(is_wide_enough_height) - is_wide_enough_height.sum()
         narrow_places_w = len(is_wide_enough_width) - is_wide_enough_width.sum()
 
-        return narrow_places_h < 5 and narrow_places_w < 5 and is_nature_extended
+        return narrow_places_h ==0 and narrow_places_w ==0 and is_nature_extended
 
         #xy_label = labels[x, y]
         #width_of_region = np.where(labels == xy_label, True, False).sum()
@@ -173,10 +173,11 @@ class Land:
                                     block.is_nature = False
 
                     else:
-                        if np.random.rand() < -1:#1/(self.size_x*self.size_y*10):
-                            block.is_centrality = True
-                            block.is_built = True
-                            block.is_nature = False
+                        if np.random.rand() < 1/(self.size_x*self.size_y*50):
+                            if self.is_nature_extended(x, y):
+                                block.is_centrality = True
+                                block.is_built = True
+                                block.is_nature = False
 
     def set_configuration_from_image(self, filepath):
         array_map = import_2Darray_from_image(filepath)
