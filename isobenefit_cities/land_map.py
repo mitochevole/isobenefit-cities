@@ -120,15 +120,20 @@ class Land:
         land_array = self.get_map_as_array()
         land_array[x, y] = 0
         labels, num_features = label(land_array)
-        if num_features > 1:
-            return False
-        else:
-            is_wide_enough_height = np.apply_along_axis(partial(is_nature_wide_along_axis, T_star=self.T_star), axis=1, arr=land_array)
-            is_wide_enough_width = np.apply_along_axis(partial(is_nature_wide_along_axis, T_star=self.T_star), axis=0, arr=land_array)
-            narrow_places_h = len(is_wide_enough_height) - is_wide_enough_height.sum()
-            narrow_places_w = len(is_wide_enough_width) - is_wide_enough_width.sum()
+        is_nature_extended = False
+        if num_features == 1:
+            is_nature_extended = True
+        # elif num_features > 1:
+        #     xy_label = labels[x, y]
+        #     size_of_region = np.where(labels == xy_label, True, False).sum()
+        #     is_nature_extended = (size_of_region >= self.minimum_area + 1)
 
-            return narrow_places_h < 10 and narrow_places_w < 10
+        is_wide_enough_height = np.apply_along_axis(partial(is_nature_wide_along_axis, T_star=self.T_star), axis=1, arr=land_array)
+        is_wide_enough_width = np.apply_along_axis(partial(is_nature_wide_along_axis, T_star=self.T_star), axis=0, arr=land_array)
+        narrow_places_h = len(is_wide_enough_height) - is_wide_enough_height.sum()
+        narrow_places_w = len(is_wide_enough_width) - is_wide_enough_width.sum()
+
+        return narrow_places_h < 5 and narrow_places_w < 5 and is_nature_extended
 
         #xy_label = labels[x, y]
         #width_of_region = np.where(labels == xy_label, True, False).sum()
@@ -162,9 +167,10 @@ class Land:
                                         block.is_built = True
                         else:
                             if np.random.rand() < 1.e-2:
-                                block.is_centrality = True
-                                block.is_built = True
-                                block.is_nature = False
+                                if self.is_nature_extended(x, y):
+                                    block.is_centrality = True
+                                    block.is_built = True
+                                    block.is_nature = False
 
                     else:
                         if np.random.rand() < -1:#1/(self.size_x*self.size_y*10):
