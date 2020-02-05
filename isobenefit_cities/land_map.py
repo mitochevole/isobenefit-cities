@@ -7,19 +7,23 @@ from scipy.ndimage.measurements import label
 
 from isobenefit_cities import logger
 from isobenefit_cities.image_io import save_image_from_2Darray, import_2Darray_from_image
+
 LOGGER = logger.get_logger()
+
 
 def d(x1, y1, x2, y2):
     # return abs(x1-x2) + abs(y1-y2)
     return np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
+
 def is_nature_wide_along_axis(array_1d, T_star):
     features, labels = label(array_1d)
     unique, counts = np.unique(features, return_counts=True)
-    if len(counts)>1:
+    if len(counts) > 1:
         return counts[1:].min() >= T_star
     else:
         return True
+
 
 class MapBlock:
     def __init__(self, x, y):
@@ -129,18 +133,19 @@ class Land:
         #     size_of_region = np.where(labels == xy_label, True, False).sum()
         #     is_nature_extended = (size_of_region >= self.minimum_area + 1)
 
-        is_wide_enough_height = np.apply_along_axis(partial(is_nature_wide_along_axis, T_star=self.T_star), axis=1, arr=land_array)
-        is_wide_enough_width = np.apply_along_axis(partial(is_nature_wide_along_axis, T_star=self.T_star), axis=0, arr=land_array)
+        is_wide_enough_height = np.apply_along_axis(partial(is_nature_wide_along_axis, T_star=self.T_star), axis=1,
+                                                    arr=land_array)
+        is_wide_enough_width = np.apply_along_axis(partial(is_nature_wide_along_axis, T_star=self.T_star), axis=0,
+                                                   arr=land_array)
         narrow_places_h = len(is_wide_enough_height) - is_wide_enough_height.sum()
         narrow_places_w = len(is_wide_enough_width) - is_wide_enough_width.sum()
 
-        return narrow_places_h ==0 and narrow_places_w ==0 and is_nature_extended
+        return narrow_places_h == 0 and narrow_places_w == 0 and is_nature_extended
 
-        #xy_label = labels[x, y]
-        #width_of_region = np.where(labels == xy_label, True, False).sum()
-        #labels_after, num_features_after = label(land_array)
-        #nature_sizes = [np.where(labels_after == l, True, False).sum() for l in range(1, num_features_after + 1)]
-
+        # xy_label = labels[x, y]
+        # width_of_region = np.where(labels == xy_label, True, False).sum()
+        # labels_after, num_features_after = label(land_array)
+        # nature_sizes = [np.where(labels_after == l, True, False).sum() for l in range(1, num_features_after + 1)]
 
     def is_nature_reachable(self, x, y):
         land_array = self.get_map_as_array()
@@ -168,22 +173,24 @@ class Land:
                                     if self.is_nature_reachable(x, y):
                                         block.is_nature = False
                                         block.is_built = True
-                                        added_blocks +=1
+                                        added_blocks += 1
                         else:
                             if np.random.rand() < 1.e-2:
                                 if self.is_nature_extended(x, y):
+                                    if self.is_nature_reachable(x, y):
+                                        block.is_centrality = True
+                                        block.is_built = True
+                                        block.is_nature = False
+                                        added_centrality += 1
+
+                    else:
+                        if np.random.rand() < 1 / (self.size_x * self.size_y * 50):
+                            if self.is_nature_extended(x, y):
+                                if self.is_nature_reachable(x,y):
                                     block.is_centrality = True
                                     block.is_built = True
                                     block.is_nature = False
-                                    added_centrality +=1
-
-                    else:
-                        if np.random.rand() < 1/(self.size_x*self.size_y*50):
-                            if self.is_nature_extended(x, y):
-                                block.is_centrality = True
-                                block.is_built = True
-                                block.is_nature = False
-                                added_centrality +=1
+                                    added_centrality += 1
         LOGGER.info(f"added blocks: {added_blocks}")
         LOGGER.info(f"added centralities: {added_centrality}")
 
