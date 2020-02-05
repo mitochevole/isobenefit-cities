@@ -68,7 +68,7 @@ def update_map_snapshot(land, canvas):
 
 
 def save_snapshot(canvas, output_path, step, format='png'):
-    final_path = os.path.join(output_path, f"{step:03d}.png")
+    final_path = os.path.join(output_path, f"{step:05d}.png")
     save_image_from_2Darray(canvas, filepath=final_path, format=format)
 
 
