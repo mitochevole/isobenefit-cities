@@ -2,12 +2,12 @@ size_x: 100
 size_y: 50
 n_steps: 100
 output_path:
-boundary_conditions: 'mirror'
+boundary_conditions: 'periodic' # can be mirror or periodic
 build_probability: 0.5
 T_star: 5
 minimum_area: 100
 random_seed: 42
 input_filepath: ''
-initialization_mode: 'list'
+initialization_mode: 'list' #can be list or image
 neighboring_centrality_probability: 1.e-2
-isolated_centrality_probability: 1.e-2
+isolated_centrality_probability: 1.
