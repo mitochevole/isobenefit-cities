@@ -35,14 +35,17 @@ class MapBlock:
 
 
 class Land:
-    def __init__(self, size_x, size_y, probability=0.5, T_star=10, minimum_area=100, boundary_conditions='mirror'):
+    def __init__(self, size_x, size_y, build_probability=0.5, neighboring_centrality_probability=5e-3,
+                 isolated_centrality_probability=1e-1, T_star=10, minimum_area=100, boundary_conditions='mirror'):
         self.size_x = size_x
         self.size_y = size_y
         self.T_star = T_star
         self.map = [[MapBlock(x, y) for x in range(size_y)] for y in range(size_x)]
         self.boundary_conditions = boundary_conditions
         self.minimum_area = minimum_area
-        self.probability = probability
+        self.build_probability = build_probability
+        self.neighboring_centrality_probability = neighboring_centrality_probability
+        self.isolated_centrality_probability = isolated_centrality_probability
 
     def check_consistency(self):
         for x in range(self.size_x):
@@ -169,13 +172,13 @@ class Land:
                     if neighborhood.is_any_neighbor_built(self.T_star, self.T_star):
                         if neighborhood.has_centrality_nearby():
                             if self.is_nature_extended(x, y):
-                                if np.random.rand() < self.probability:
+                                if np.random.rand() < self.build_probability:
                                     if self.is_nature_reachable(x, y):
                                         block.is_nature = False
                                         block.is_built = True
                                         added_blocks += 1
                         else:
-                            if np.random.rand() < 1.e-2:
+                            if np.random.rand() < self.neighboring_centrality_probability:
                                 if self.is_nature_extended(x, y):
                                     if self.is_nature_reachable(x, y):
                                         block.is_centrality = True
@@ -184,9 +187,9 @@ class Land:
                                         added_centrality += 1
 
                     else:
-                        if np.random.rand() < 1 / (self.size_x * self.size_y * 50):
+                        if np.random.rand() < self.isolated_centrality_probability / (self.size_x * self.size_y):
                             if self.is_nature_extended(x, y):
-                                if self.is_nature_reachable(x,y):
+                                if self.is_nature_reachable(x, y):
                                     block.is_centrality = True
                                     block.is_built = True
                                     block.is_nature = False
