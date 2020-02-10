@@ -1,7 +1,8 @@
 import argparse
 import os
 import time
-import yaml
+
+# import yaml
 import numpy as np
 
 from isobenefit_cities import logger
@@ -9,6 +10,7 @@ from isobenefit_cities.image_io import save_image_from_2Darray
 from isobenefit_cities.initialization_utils import get_central_coord
 from isobenefit_cities.land_map import Land, MapBlock
 
+LOGGER = logger.get_logger()
 N_AMENITIES = 1
 
 
@@ -162,28 +164,27 @@ def create_arg_parser():
 
 
 if __name__ == "__main__":
-    with open('config.yaml', "r") as config_file:
-        SIMULATION_CONFIG = yaml.load(config_file, Loader=yaml.SafeLoader)
-    main(**SIMULATION_CONFIG)
-    # parser = create_arg_parser()
-    # args = parser.parse_args()
-    # size_x = args.size_x
-    # size_y = args.size_y
-    # n_steps = args.n_steps
-    # output_path = args.output_path
-    # boundary_conditions = args.boundary_conditions
-    # build_probability = args.build_probability
-    # T = args.T
-    # minimum_area = args.minimum_area
-    # random_seed = args.random_seed
-    # input_filepath = args.input_filepath
-    # initialization_mode = args.initialization_mode
-    # neighboring_centrality_probability = args.neighboring_centrality_probability
-    # isolated_centrality_probability = args.isolated_centrality_probability
-    # LOGGER.info(args)
-    #
-    # main(size_x=size_x, size_y=size_y, n_steps=n_steps, output_path=output_path,
-    #      boundary_conditions=boundary_conditions, build_probability=build_probability,
-    #      neighboring_centrality_probability=neighboring_centrality_probability,
-    #      isolated_centrality_probability=isolated_centrality_probability, T_star=T, minimum_area=minimum_area,
-    #      random_seed=random_seed, input_filepath=input_filepath, initialization_mode=initialization_mode)
+    # with open('config.yaml', "r") as config_file:
+    #    SIMULATION_CONFIG = yaml.load(config_file, Loader=yaml.SafeLoader)
+    # main(**SIMULATION_CONFIG)
+    parser = create_arg_parser()
+    args = parser.parse_args()
+    size_x = args.size_x
+    size_y = args.size_y
+    n_steps = args.n_steps
+    output_path = args.output_path
+    boundary_conditions = args.boundary_conditions
+    build_probability = args.build_probability
+    T = args.T
+    minimum_area = args.minimum_area
+    random_seed = args.random_seed
+    input_file_path = args.input_filepath
+    initialization_mode = args.initialization_mode
+    neighboring_centrality_probability = args.neighboring_centrality_probability
+    isolated_centrality_probability = args.isolated_centrality_probability
+    LOGGER.info(args)
+    main(size_x=size_x, size_y=size_y, n_steps=n_steps, output_path=output_path,
+         boundary_conditions=boundary_conditions, build_probability=build_probability,
+         neighboring_centrality_probability=neighboring_centrality_probability,
+         isolated_centrality_probability=isolated_centrality_probability, T_star=T, minimum_area=minimum_area,
+         random_seed=random_seed, input_filepath=input_file_path, initialization_mode=initialization_mode)
