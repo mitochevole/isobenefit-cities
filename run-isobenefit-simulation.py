@@ -14,9 +14,9 @@ LOGGER = logger.get_logger()
 N_AMENITIES = 1
 
 
-def main(size_x, size_y, n_steps, output_path, boundary_conditions, build_probability,
-         neighboring_centrality_probability, isolated_centrality_probability, T_star, minimum_area, random_seed,
-         input_filepath, initialization_mode):
+def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, boundary_conditions, build_probability,
+                              neighboring_centrality_probability, isolated_centrality_probability, T_star, minimum_area, random_seed,
+                              input_filepath, initialization_mode):
     logger.configure_logging()
     LOGGER = logger.get_logger()
     np.random.seed(random_seed)
@@ -166,7 +166,7 @@ def create_arg_parser():
 if __name__ == "__main__":
     # with open('config.yaml', "r") as config_file:
     #    SIMULATION_CONFIG = yaml.load(config_file, Loader=yaml.SafeLoader)
-    # main(**SIMULATION_CONFIG)
+    # run_isobenefit_simulation(**SIMULATION_CONFIG)
     parser = create_arg_parser()
     args = parser.parse_args()
     size_x = args.size_x
@@ -183,8 +183,8 @@ if __name__ == "__main__":
     neighboring_centrality_probability = args.neighboring_centrality_probability
     isolated_centrality_probability = args.isolated_centrality_probability
     LOGGER.info(args)
-    main(size_x=size_x, size_y=size_y, n_steps=n_steps, output_path=output_path,
-         boundary_conditions=boundary_conditions, build_probability=build_probability,
-         neighboring_centrality_probability=neighboring_centrality_probability,
-         isolated_centrality_probability=isolated_centrality_probability, T_star=T, minimum_area=minimum_area,
-         random_seed=random_seed, input_filepath=input_file_path, initialization_mode=initialization_mode)
+    run_isobenefit_simulation(size_x=size_x, size_y=size_y, n_steps=n_steps, output_path=output_path,
+                              boundary_conditions=boundary_conditions, build_probability=build_probability,
+                              neighboring_centrality_probability=neighboring_centrality_probability,
+                              isolated_centrality_probability=isolated_centrality_probability, T_star=T, minimum_area=minimum_area,
+                              random_seed=random_seed, input_filepath=input_file_path, initialization_mode=initialization_mode)
