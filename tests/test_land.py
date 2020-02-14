@@ -44,3 +44,8 @@ class TestLand(TestCase):
         for x, y in expected_centralities:
             assert land.map[x][y].is_centrality == True
 
+    def test_logger(self):
+        from isobenefit_cities import logger
+        LOGGER = logger.get_logger()
+        LOGGER.info("test_logger")
+        print(logger.BASE_DIR)

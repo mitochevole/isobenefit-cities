@@ -1,15 +1,28 @@
 import copy
+from functools import partial
 
 import numpy as np
 from matplotlib import cm
 from scipy.ndimage.measurements import label
 
+from isobenefit_cities import logger
 from isobenefit_cities.image_io import save_image_from_2Darray, import_2Darray_from_image
+
+LOGGER = logger.get_logger()
 
 
 def d(x1, y1, x2, y2):
     # return abs(x1-x2) + abs(y1-y2)
     return np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
+
+def is_nature_wide_along_axis(array_1d, T_star):
+    features, labels = label(array_1d)
+    unique, counts = np.unique(features, return_counts=True)
+    if len(counts) > 1:
+        return counts[1:].min() >= T_star
+    else:
+        return True
 
 
 class MapBlock:
@@ -22,14 +35,17 @@ class MapBlock:
 
 
 class Land:
-    def __init__(self, size_x, size_y, probability=0.5, T_star=10, minimum_area=100, boundary_conditions='mirror'):
+    def __init__(self, size_x, size_y, build_probability=0.5, neighboring_centrality_probability=5e-3,
+                 isolated_centrality_probability=1e-1, T_star=10, minimum_area=100, boundary_conditions='mirror'):
         self.size_x = size_x
         self.size_y = size_y
         self.T_star = T_star
         self.map = [[MapBlock(x, y) for x in range(size_y)] for y in range(size_x)]
         self.boundary_conditions = boundary_conditions
         self.minimum_area = minimum_area
-        self.probability = probability
+        self.build_probability = build_probability
+        self.neighboring_centrality_probability = neighboring_centrality_probability
+        self.isolated_centrality_probability = isolated_centrality_probability
 
     def check_consistency(self):
         for x in range(self.size_x):
@@ -110,20 +126,29 @@ class Land:
     def is_nature_extended(self, x, y):
         # this method assumes that x,y belongs to a natural region
         land_array = self.get_map_as_array()
+        land_array[x, y] = 0
         labels, num_features = label(land_array)
         is_nature_extended = False
         if num_features == 1:
             is_nature_extended = True
-        elif num_features > 1:
-            xy_label = labels[x, y]
-            size_of_region = np.where(labels == xy_label, True, False).sum()
-            is_nature_extended = (size_of_region >= self.minimum_area + 1)  # or size_of_region < self.minimum_area
-        # here we mock the fact that the block under consideration will be built
-        #  and check if the regions of nature created are smaller than the critical size
-        land_array[x, y] = 0
-        labels_after, num_features_after = label(land_array)
-        nature_sizes = [np.where(labels_after == l, True, False).sum() for l in range(1, num_features_after + 1)]
-        return is_nature_extended and min(nature_sizes) >= self.minimum_area + 1
+        # elif num_features > 1:
+        #     xy_label = labels[x, y]
+        #     size_of_region = np.where(labels == xy_label, True, False).sum()
+        #     is_nature_extended = (size_of_region >= self.minimum_area + 1)
+
+        is_wide_enough_height = np.apply_along_axis(partial(is_nature_wide_along_axis, T_star=self.T_star), axis=1,
+                                                    arr=land_array)
+        is_wide_enough_width = np.apply_along_axis(partial(is_nature_wide_along_axis, T_star=self.T_star), axis=0,
+                                                   arr=land_array)
+        narrow_places_h = len(is_wide_enough_height) - is_wide_enough_height.sum()
+        narrow_places_w = len(is_wide_enough_width) - is_wide_enough_width.sum()
+
+        return narrow_places_h == 0 and narrow_places_w == 0 and is_nature_extended
+
+        # xy_label = labels[x, y]
+        # width_of_region = np.where(labels == xy_label, True, False).sum()
+        # labels_after, num_features_after = label(land_array)
+        # nature_sizes = [np.where(labels_after == l, True, False).sum() for l in range(1, num_features_after + 1)]
 
     def is_nature_reachable(self, x, y):
         land_array = self.get_map_as_array()
@@ -134,6 +159,8 @@ class Land:
             axis=1).max() <= self.T_star
 
     def update_map(self):
+        added_blocks = 0
+        added_centrality = 0
         copy_land = copy.deepcopy(self)
         for x in range(self.size_x):
             for y in range(self.size_y):
@@ -145,10 +172,30 @@ class Land:
                     if neighborhood.is_any_neighbor_built(self.T_star, self.T_star):
                         if neighborhood.has_centrality_nearby():
                             if self.is_nature_extended(x, y):
-                                if np.random.rand() < self.probability:
+                                if np.random.rand() < self.build_probability:
                                     if self.is_nature_reachable(x, y):
                                         block.is_nature = False
                                         block.is_built = True
+                                        added_blocks += 1
+                        else:
+                            if np.random.rand() < self.neighboring_centrality_probability:
+                                if self.is_nature_extended(x, y):
+                                    if self.is_nature_reachable(x, y):
+                                        block.is_centrality = True
+                                        block.is_built = True
+                                        block.is_nature = False
+                                        added_centrality += 1
+
+                    else:
+                        if np.random.rand() < self.isolated_centrality_probability / (self.size_x * self.size_y):
+                            if self.is_nature_extended(x, y):
+                                if self.is_nature_reachable(x, y):
+                                    block.is_centrality = True
+                                    block.is_built = True
+                                    block.is_nature = False
+                                    added_centrality += 1
+        LOGGER.info(f"added blocks: {added_blocks}")
+        LOGGER.info(f"added centralities: {added_centrality}")
 
     def set_configuration_from_image(self, filepath):
         array_map = import_2Darray_from_image(filepath)
