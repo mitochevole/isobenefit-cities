@@ -1,7 +1,9 @@
+import json
 import os
 import time
-import json
+
 import numpy as np
+from PIL import Image, ImageTk
 
 from isobenefit_cities import logger
 from isobenefit_cities.image_io import save_image_from_2Darray
@@ -12,7 +14,8 @@ N_AMENITIES = 1
 
 
 def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, boundary_conditions, build_probability,
-                              neighboring_centrality_probability, isolated_centrality_probability, T_star, minimum_area, random_seed,
+                              neighboring_centrality_probability, isolated_centrality_probability, T_star, minimum_area,
+                              random_seed,
                               input_filepath, initialization_mode):
     metadata = {}
     logger.configure_logging()
@@ -24,7 +27,7 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, boundary_con
     os.makedirs(output_path)
     metadata['output_path'] = output_path
     t_zero = time.time()
-    with open('temp_metadata','w') as f:
+    with open('temp_metadata', 'w') as f:
         f.write(json.dumps(metadata))
     land = initialize_land(size_x, size_y,
                            # amenities_list=get_random_coordinates(size_x=size_x, size_y=size_y, n_amenities=N_AMENITIES, seed=random_seed),
@@ -38,13 +41,15 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, boundary_con
 
     canvas = np.ones(shape=(size_x, size_y)) * 0.5
     update_map_snapshot(land, canvas)
-    save_snapshot(canvas, output_path=output_path, step=0)
+    snapshot_path = save_snapshot(canvas, output_path=output_path, step=0)
+
     for i in range(n_steps):
         start = time.time()
         land.update_map()
         LOGGER.info(f"step: {i}, duration: {time.time() - start} seconds")
         update_map_snapshot(land, canvas)
-        save_snapshot(canvas, output_path=output_path, step=i + 1)
+        snapshot_path = save_snapshot(canvas, output_path=output_path, step=i + 1)
+
     LOGGER.info(f"Simulation ended. Total duration: {time.time()-t_zero} seconds")
 
 
@@ -78,3 +83,7 @@ def update_map_snapshot(land, canvas):
 def save_snapshot(canvas, output_path, step, format='png'):
     final_path = os.path.join(output_path, f"{step:05d}.png")
     save_image_from_2Darray(canvas, filepath=final_path, format=format)
+    return final_path
+
+
+
