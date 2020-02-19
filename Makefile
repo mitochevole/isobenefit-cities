@@ -9,3 +9,7 @@ create-and-install:
 	make create-env name=$(name)
 	conda activate $(name)
 	make install
+
+run-gui:
+	python tkinter-gui-interface.py
+

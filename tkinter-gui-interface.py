@@ -1,11 +1,6 @@
-import glob
-import json
 import tkinter as tk
-import os
-from PIL import Image, ImageTk
 
 from isobenefit_cities.simulation import run_isobenefit_simulation
-
 
 args_list = [{'arg': 'size_x', 'name': 'X size', 'type': int},
              {'arg': 'size_y', 'name': 'Y size', 'type': int},
@@ -52,22 +47,6 @@ def simluation_wrapper(entries, argument_list, ):
     input_args.update({'minimum_area': 100, 'input_filepath': None, 'initialization_mode': 'list', 'output_path': None})
     run_isobenefit_simulation(**input_args)
 
-
-def get_most_recent_snapshot_filepath(metadata):
-    with open(metadata, 'r') as f:
-        output_path =json.loads(f.read())['output_path']
-    list_of_files = glob.glob(output_path+'/*.png')  # * means all if need specific format then *.csv
-    latest_file = max(list_of_files, key=os.path.getctime)
-    return latest_file
-
-
-def update_gui_canvas(gui_canvas, final_path):
-    print(final_path)
-    pilImage = Image.open(final_path)
-    image = ImageTk.PhotoImage(pilImage)
-    gui_canvas.create_image(100, 100, image=image)
-
-# TODO add inside simulation wrapper another window that opens the canvas and plots the images
 
 if __name__ == '__main__':
     root = tk.Tk()

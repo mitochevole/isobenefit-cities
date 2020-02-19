@@ -3,7 +3,6 @@ import os
 import time
 
 import numpy as np
-from PIL import Image, ImageTk
 
 from isobenefit_cities import logger
 from isobenefit_cities.image_io import save_image_from_2Darray
@@ -84,6 +83,3 @@ def save_snapshot(canvas, output_path, step, format='png'):
     final_path = os.path.join(output_path, f"{step:05d}.png")
     save_image_from_2Darray(canvas, filepath=final_path, format=format)
     return final_path
-
-
-
