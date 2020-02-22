@@ -74,6 +74,7 @@ class Land:
             self.map[x][y].is_nature = False
 
     def get_neighborhood(self, x, y):
+
         neighborhood = Land(size_x=2 * self.T_star + 1, size_y=2 * self.T_star + 1, T_star=self.T_star)
         for i in range(x - self.T_star, x + self.T_star + 1):
             for j in range(y - self.T_star, y + self.T_star + 1):
