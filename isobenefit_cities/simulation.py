@@ -38,13 +38,17 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, boundary_con
     canvas = np.ones(shape=(size_x, size_y)) * 0.5
     update_map_snapshot(land, canvas)
     snapshot_path = save_snapshot(canvas, output_path=output_path, step=0)
-
-    for i in range(n_steps):
+    i = 0
+    current_population = 0
+    while i <= n_steps and current_population <= land.max_population:
         start = time.time()
         land.update_map()
+        current_population = land.get_current_population()
         LOGGER.info(f"step: {i}, duration: {time.time() - start} seconds")
+        LOGGER.info(f"step: {i}, current population: {current_population} inhabitants")
         update_map_snapshot(land, canvas)
         snapshot_path = save_snapshot(canvas, output_path=output_path, step=i + 1)
+        i+=1
 
     LOGGER.info(f"Simulation ended. Total duration: {time.time()-t_zero} seconds")
 
