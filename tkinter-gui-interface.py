@@ -17,7 +17,7 @@ args_list = [{'arg': 'size_x', 'name': 'X size', 'type': int},
               'name': 'New Centrality P2',
               'type': float},
              {'arg': 'T_star', 'name': 'T*', 'type': int},
-             {'arg': 'random_seed', 'name': 'random seed generator', 'type': int}]
+             {'arg': 'random_seed', 'name': 'random seed', 'type': int}]
 
 
 def make_interface(root, arguments_list):

@@ -26,8 +26,6 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, boundary_con
     os.makedirs(output_path)
     metadata['output_path'] = output_path
     t_zero = time.time()
-    with open('temp_metadata', 'w') as f:
-        f.write(json.dumps(metadata))
     land = initialize_land(size_x, size_y,
                            # amenities_list=get_random_coordinates(size_x=size_x, size_y=size_y, n_amenities=N_AMENITIES, seed=random_seed),
                            amenities_list=get_central_coord(size_x=size_x, size_y=size_y),
