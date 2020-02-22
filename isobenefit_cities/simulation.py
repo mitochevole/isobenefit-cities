@@ -1,4 +1,3 @@
-import json
 import os
 import time
 
@@ -48,7 +47,7 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, boundary_con
         LOGGER.info(f"step: {i}, current population: {current_population} inhabitants")
         update_map_snapshot(land, canvas)
         snapshot_path = save_snapshot(canvas, output_path=output_path, step=i + 1)
-        i+=1
+        i += 1
 
     LOGGER.info(f"Simulation ended. Total duration: {time.time()-t_zero} seconds")
 
@@ -75,7 +74,7 @@ def update_map_snapshot(land, canvas):
     for row in land.map:
         for block in row:
             if block.is_built:
-                canvas[block.y, block.x] = 0
+                canvas[block.y, block.x] = -0.1 * np.log10(block.inhabitants / land.block_pop)
             if block.is_centrality:
                 canvas[block.y, block.x] = 1
 
