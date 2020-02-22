@@ -26,26 +26,34 @@ def is_nature_wide_along_axis(array_1d, T_star):
 
 
 class MapBlock:
-    def __init__(self, x, y):
+    def __init__(self, x, y, inhabitants):
         self.x = x
         self.y = y
         self.is_nature = True
         self.is_built = False
         self.is_centrality = False
+        self.inhabitants = inhabitants
+
 
 
 class Land:
     def __init__(self, size_x, size_y, build_probability=0.5, neighboring_centrality_probability=5e-3,
-                 isolated_centrality_probability=1e-1, T_star=10, minimum_area=100, boundary_conditions='mirror'):
+                 isolated_centrality_probability=1e-1, T_star=10, minimum_area=100, boundary_conditions='mirror',
+                 max_population=1000000, max_ab_km2=5000):
         self.size_x = size_x
         self.size_y = size_y
         self.T_star = T_star
-        self.map = [[MapBlock(x, y) for x in range(size_y)] for y in range(size_x)]
+        self.map = [[MapBlock(x, y, inhabitants=0) for x in range(size_y)] for y in range(size_x)]
         self.boundary_conditions = boundary_conditions
         self.minimum_area = minimum_area
         self.build_probability = build_probability
         self.neighboring_centrality_probability = neighboring_centrality_probability
         self.isolated_centrality_probability = isolated_centrality_probability
+        self.max_population = max_population
+        #the assumption is that T_star is the number of blocks
+        # that equals to a 15 minutes walk, i.e. roughly 1 km. 1 block has size 1000/T_star metres
+        self.block_pop = max_ab_km2/(T_star**2)
+
 
     def check_consistency(self):
         for x in range(self.size_x):
@@ -132,10 +140,6 @@ class Land:
         is_nature_extended = False
         if num_features == 1:
             is_nature_extended = True
-        # elif num_features > 1:
-        #     xy_label = labels[x, y]
-        #     size_of_region = np.where(labels == xy_label, True, False).sum()
-        #     is_nature_extended = (size_of_region >= self.minimum_area + 1)
 
         is_wide_enough_height = np.apply_along_axis(partial(is_nature_wide_along_axis, T_star=self.T_star), axis=1,
                                                     arr=land_array)
@@ -145,11 +149,6 @@ class Land:
         narrow_places_w = len(is_wide_enough_width) - is_wide_enough_width.sum()
 
         return narrow_places_h == 0 and narrow_places_w == 0 and is_nature_extended
-
-        # xy_label = labels[x, y]
-        # width_of_region = np.where(labels == xy_label, True, False).sum()
-        # labels_after, num_features_after = label(land_array)
-        # nature_sizes = [np.where(labels_after == l, True, False).sum() for l in range(1, num_features_after + 1)]
 
     def is_nature_reachable(self, x, y):
         land_array = self.get_map_as_array()
@@ -175,8 +174,10 @@ class Land:
                             if self.is_nature_extended(x, y):
                                 if np.random.rand() < self.build_probability:
                                     if self.is_nature_reachable(x, y):
+                                        random_factor = np.random.choice([1,0.1,0.001],p=[0.7,0.3,0])
                                         block.is_nature = False
                                         block.is_built = True
+                                        block.inhabitants = self.block_pop * random_factor
                                         added_blocks += 1
                         else:
                             if np.random.rand() < self.neighboring_centrality_probability:
@@ -211,3 +212,11 @@ class Land:
                     self.map[x][y].is_built = True
                     self.map[x][y].is_centrality = False
                     self.map[x][y].is_nature = False
+
+
+    def get_current_population(self):
+        tot_population = 0
+        for x in range(self.size_x):
+            for y in range(self.size_y):
+                tot_population+=self.map[x][y].inhabitants
+        return tot_population

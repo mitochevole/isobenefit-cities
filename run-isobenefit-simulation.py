@@ -92,9 +92,7 @@ def create_arg_parser():
 
 
 if __name__ == "__main__":
-    # with open('config.yaml', "r") as config_file:
-    #    SIMULATION_CONFIG = yaml.load(config_file, Loader=yaml.SafeLoader)
-    # run_isobenefit_simulation(**SIMULATION_CONFIG)
+
     parser = create_arg_parser()
     args = parser.parse_args()
     size_x = args.size_x

@@ -27,7 +27,6 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, boundary_con
     metadata['output_path'] = output_path
     t_zero = time.time()
     land = initialize_land(size_x, size_y,
-                           # amenities_list=get_random_coordinates(size_x=size_x, size_y=size_y, n_amenities=N_AMENITIES, seed=random_seed),
                            amenities_list=get_central_coord(size_x=size_x, size_y=size_y),
                            boundary_conditions=boundary_conditions,
                            neighboring_centrality_probability=neighboring_centrality_probability,
@@ -60,7 +59,7 @@ def initialize_land(size_x, size_y, boundary_conditions, build_probability, neig
     if mode == 'image' and filepath is not None:
         land.set_configuration_from_image(filepath)
     elif mode == 'list':
-        amenities = [MapBlock(x, y) for (x, y) in amenities_list]
+        amenities = [MapBlock(x, y, inhabitants=0) for (x, y) in amenities_list]
         land.set_centralities(amenities)
     else:
         raise Exception('Invalid initialization mode. Valid modes are "image" and "list".')
