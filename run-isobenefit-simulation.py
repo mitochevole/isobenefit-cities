@@ -1,9 +1,9 @@
 import argparse
 
-# import yaml
-
 from isobenefit_cities import logger
 from isobenefit_cities.simulation import run_isobenefit_simulation
+
+# import yaml
 
 LOGGER = logger.get_logger()
 
@@ -88,11 +88,21 @@ def create_arg_parser():
                         type=str,
                         help="initial configuration can be set via an input image or via a list of initial centralities")
 
+    parser.add_argument('--max-population',
+                        required=False,
+                        type=int,
+                        default=1000000,
+                        help="maximum population reachable by the simulation")
+
+    parser.add_argument('--max-ab-km2',
+                        required=False,
+                        type=int,
+                        default=10000,
+                        help="maximum population density (ab/km^2) in the simulation")
     return parser
 
 
 if __name__ == "__main__":
-
     parser = create_arg_parser()
     args = parser.parse_args()
     size_x = args.size_x
@@ -108,9 +118,14 @@ if __name__ == "__main__":
     initialization_mode = args.initialization_mode
     neighboring_centrality_probability = args.neighboring_centrality_probability
     isolated_centrality_probability = args.isolated_centrality_probability
+    max_population = args.max_population
+    max_ab_km2 = args.max_ab_km2
     LOGGER.info(args)
     run_isobenefit_simulation(size_x=size_x, size_y=size_y, n_steps=n_steps, output_path=output_path,
                               boundary_conditions=boundary_conditions, build_probability=build_probability,
                               neighboring_centrality_probability=neighboring_centrality_probability,
-                              isolated_centrality_probability=isolated_centrality_probability, T_star=T, minimum_area=minimum_area,
-                              random_seed=random_seed, input_filepath=input_file_path, initialization_mode=initialization_mode)
+                              isolated_centrality_probability=isolated_centrality_probability, T_star=T,
+                              minimum_area=minimum_area,
+                              random_seed=random_seed, input_filepath=input_file_path,
+                              initialization_mode=initialization_mode, max_population=max_population,
+                              max_ab_km2=max_ab_km2)

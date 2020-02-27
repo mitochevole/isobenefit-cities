@@ -14,7 +14,7 @@ N_AMENITIES = 1
 def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, boundary_conditions, build_probability,
                               neighboring_centrality_probability, isolated_centrality_probability, T_star, minimum_area,
                               random_seed,
-                              input_filepath, initialization_mode):
+                              input_filepath, initialization_mode, max_population, max_ab_km2):
     metadata = {}
     logger.configure_logging()
     LOGGER = logger.get_logger()
@@ -32,7 +32,7 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, boundary_con
                            isolated_centrality_probability=isolated_centrality_probability,
                            build_probability=build_probability, T=T_star, minimum_area=minimum_area,
                            mode=initialization_mode,
-                           filepath=input_filepath)
+                           filepath=input_filepath, max_population=max_population, max_ab_km2=max_ab_km2)
 
     canvas = np.ones(shape=(size_x, size_y)) * 0.5
     update_map_snapshot(land, canvas)
@@ -53,12 +53,12 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, boundary_con
 
 
 def initialize_land(size_x, size_y, boundary_conditions, build_probability, neighboring_centrality_probability,
-                    isolated_centrality_probability, T, minimum_area, mode=None, filepath=None,
+                    isolated_centrality_probability, T, minimum_area, max_population, max_ab_km2, mode=None, filepath=None,
                     amenities_list=None):
     land = Land(size_x=size_x, size_y=size_y, boundary_conditions=boundary_conditions,
                 neighboring_centrality_probability=neighboring_centrality_probability,
                 isolated_centrality_probability=isolated_centrality_probability,
-                build_probability=build_probability, T_star=T, minimum_area=minimum_area)
+                build_probability=build_probability, T_star=T, minimum_area=minimum_area, max_population=max_population, max_ab_km2=max_ab_km2)
     if mode == 'image' and filepath is not None:
         land.set_configuration_from_image(filepath)
     elif mode == 'list':

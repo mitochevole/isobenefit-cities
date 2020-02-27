@@ -39,7 +39,7 @@ class MapBlock:
 class Land:
     def __init__(self, size_x, size_y, build_probability=0.5, neighboring_centrality_probability=5e-3,
                  isolated_centrality_probability=1e-1, T_star=10, minimum_area=100, boundary_conditions='mirror',
-                 max_population=500000, max_ab_km2=5000):
+                 max_population=500000, max_ab_km2=10000):
         self.size_x = size_x
         self.size_y = size_y
         self.T_star = T_star
