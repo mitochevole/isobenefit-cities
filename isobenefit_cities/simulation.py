@@ -31,9 +31,10 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, build_probab
                            isolated_centrality_probability=isolated_centrality_probability,
                            build_probability=build_probability, T=T_star,
                            mode=initialization_mode,
-                           filepath=input_filepath, max_population=max_population, max_ab_km2=max_ab_km2, urbanism_model=urbanism_model)
+                           filepath=input_filepath, max_population=max_population, max_ab_km2=max_ab_km2,
+                           urbanism_model=urbanism_model)
 
-    canvas = np.ones(shape=(size_x, size_y)) * 0.5
+    canvas = np.ones(shape=(size_x, size_y,4))
     update_map_snapshot(land, canvas)
     snapshot_path = save_snapshot(canvas, output_path=output_path, step=0)
     i = 0
@@ -55,7 +56,7 @@ def initialize_land(size_x, size_y, build_probability, neighboring_centrality_pr
                     isolated_centrality_probability, T, max_population, max_ab_km2, mode=None,
                     filepath=None,
                     amenities_list=None, urbanism_model='isobenefit'):
-    assert size_x > 2*T and size_y > 2*T, f"size of the map is too small: {size_x}x{size_y}. Dimensions should be larger than {2*T}"
+    assert size_x > 2 * T and size_y > 2 * T, f"size of the map is too small: {size_x}x{size_y}. Dimensions should be larger than {2*T}"
     if urbanism_model == 'isobenefit':
         land = IsobenefitScenario(size_x=size_x, size_y=size_y,
                                   neighboring_centrality_probability=neighboring_centrality_probability,
@@ -69,7 +70,7 @@ def initialize_land(size_x, size_y, build_probability, neighboring_centrality_pr
                                 build_probability=build_probability, T_star=T,
                                 max_population=max_population, max_ab_km2=max_ab_km2)
     else:
-        raise("Invalid urbanism model. Choose one of 'isobenefit' and 'standard'")
+        raise ("Invalid urbanism model. Choose one of 'isobenefit' and 'standard'")
 
     if mode == 'image' and filepath is not None:
         land.set_configuration_from_image(filepath)
@@ -86,9 +87,12 @@ def update_map_snapshot(land, canvas):
     for row in land.map:
         for block in row:
             if block.is_built:
-                canvas[block.y, block.x] = -0.1 * np.log10(block.inhabitants / land.block_pop)
-            if block.is_centrality:
-                canvas[block.y, block.x] = 1
+                color = np.ones(3) * (-0.1 * np.log10(block.inhabitants / land.block_pop))
+                if block.is_centrality:
+                    color = np.ones(3)
+            else:
+                color = (0 / 255, 158 / 255, 96 / 255)
+            canvas[block.y, block.x] = np.array([color[0], color[1], color[2], 1])
 
 
 def save_snapshot(canvas, output_path, step, format='png'):

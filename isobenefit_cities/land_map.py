@@ -52,9 +52,6 @@ class Land:
                     A[x, y] = 0
         return A
 
-    def save_land(self, filepath, color_map=cm.gist_earth, format='png'):
-        land = self.get_map_as_array()
-        save_image_from_2Darray(land_array=land, filepath=filepath, color_map=color_map, format=format)
 
     def set_centralities(self, centralities: list):
         for centrality in centralities:
@@ -78,6 +75,8 @@ class Land:
     def is_any_neighbor_built(self, x, y):
         return (self.map[x - 1][y].is_built or self.map[x + 1][y].is_built or self.map[x][y - 1].is_built or
                 self.map[x][y + 1].is_built)
+
+
 
     def has_centrality_nearby(self):
         for x in range(self.size_x):
@@ -199,5 +198,37 @@ class IsobenefitScenario(Land):
 
 
 class StandardScenario(Land):
+    def is_any_neighbor_centrality(self, x, y):
+        return (self.map[x - 1][y].is_centrality or self.map[x + 1][y].is_centrality or self.map[x][y - 1].is_centrality or
+                self.map[x][y + 1].is_centrality)
+
     def update_map(self):
-        pass
+        added_blocks = 0
+        added_centrality = 0
+        copy_land = copy.deepcopy(self)
+        for x in range(self.T_star, self.size_x - self.T_star):
+            for y in range(self.T_star,self.size_y - self.T_star):
+                block = self.map[x][y]
+                assert (block.is_nature  and not block.is_built) or (
+                        block.is_built and not block.is_nature), f"({x},{y}) block has ambiguous coordinates"
+                if block.is_nature:
+                    neighborhood = copy_land.get_neighborhood(x, y)
+                    if neighborhood.is_any_neighbor_built(self.T_star, self.T_star):
+                        if np.random.rand() < self.build_probability:
+                            random_factor = np.random.choice([1, 0.1, 0.001], p=[0.3,0.4,0.3])
+                            block.is_nature = False
+                            block.is_built = True
+                            block.inhabitants = self.block_pop * random_factor
+                            added_blocks += 1
+                else:
+                    if self.is_any_neighbor_centrality(x,y):
+                        if np.random.rand() < self.neighboring_centrality_probability:
+                            block.is_centrality = True
+                            block.is_built = True
+                            block.is_nature = False
+                            block.inhabitants = 0
+                            added_centrality += 1
+
+
+        LOGGER.info(f"added blocks: {added_blocks}")
+        LOGGER.info(f"added centralities: {added_centrality}")

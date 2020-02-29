@@ -2,7 +2,8 @@ import tkinter as tk
 
 from isobenefit_cities.simulation import run_isobenefit_simulation
 
-args_list = [{'arg': 'size_x', 'name': 'X size', 'type': int},
+args_list = [{'arg': 'urbanism_model', 'name': 'City development model', 'type': str},
+             {'arg': 'size_x', 'name': 'X size', 'type': int},
              {'arg': 'size_y', 'name': 'Y size', 'type': int},
              {'arg': 'n_steps', 'name': 'Iterartions', 'type': int},
              {'arg': 'max_population', 'name': 'Max Population', 'type': int},
@@ -40,7 +41,7 @@ def make_interface(root, arguments_list):
     return entries
 
 
-def simluation_wrapper(entries, argument_list, ):
+def simluation_wrapper(entries, argument_list):
     input_args = {}
     for argument in argument_list:
         input_args[argument['arg']] = argument['type'](entries[argument['arg']].get())
