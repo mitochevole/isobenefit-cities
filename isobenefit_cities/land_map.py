@@ -11,20 +11,6 @@ from isobenefit_cities.image_io import save_image_from_2Darray, import_2Darray_f
 LOGGER = logger.get_logger()
 
 
-def d(x1, y1, x2, y2):
-    # return abs(x1-x2) + abs(y1-y2)
-    return np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
-
-
-def is_nature_wide_along_axis(array_1d, T_star):
-    features, labels = label(array_1d)
-    unique, counts = np.unique(features, return_counts=True)
-    if len(counts) > 1:
-        return counts[1:].min() >= T_star
-    else:
-        return True
-
-
 class MapBlock:
     def __init__(self, x, y, inhabitants):
         self.x = x
@@ -35,25 +21,21 @@ class MapBlock:
         self.inhabitants = inhabitants
 
 
-
 class Land:
     def __init__(self, size_x, size_y, build_probability=0.5, neighboring_centrality_probability=5e-3,
-                 isolated_centrality_probability=1e-1, T_star=10, minimum_area=100, boundary_conditions='mirror',
+                 isolated_centrality_probability=1e-1, T_star=10,
                  max_population=500000, max_ab_km2=10000):
         self.size_x = size_x
         self.size_y = size_y
         self.T_star = T_star
         self.map = [[MapBlock(x, y, inhabitants=0) for x in range(size_y)] for y in range(size_x)]
-        self.boundary_conditions = boundary_conditions
-        self.minimum_area = minimum_area
         self.build_probability = build_probability
         self.neighboring_centrality_probability = neighboring_centrality_probability
         self.isolated_centrality_probability = isolated_centrality_probability
         self.max_population = max_population
-        #the assumption is that T_star is the number of blocks
+        # the assumption is that T_star is the number of blocks
         # that equals to a 15 minutes walk, i.e. roughly 1 km. 1 block has size 1000/T_star metres
-        self.block_pop = max_ab_km2/(T_star**2)
-
+        self.block_pop = max_ab_km2 / (T_star ** 2)
 
     def check_consistency(self):
         for x in range(self.size_x):
@@ -86,35 +68,12 @@ class Land:
         neighborhood = Land(size_x=2 * self.T_star + 1, size_y=2 * self.T_star + 1, T_star=self.T_star)
         for i in range(x - self.T_star, x + self.T_star + 1):
             for j in range(y - self.T_star, y + self.T_star + 1):
-                i2, j2 = self.boundary_transform(i, j)
                 try:
-                    neighborhood.map[i + self.T_star - x][j + self.T_star - y] = self.map[i2][j2]
+                    neighborhood.map[i + self.T_star - x][j + self.T_star - y] = self.map[i][j]
                 except Exception as e:
-                    print("i: {}, j: {}, i2: {}, j2: {}, x: {}, y: {}, T: {}".format(i, j, i2, j2, x, y, self.T_star))
+                    print("i: {}, j: {}, x: {}, y: {}, T: {}".format(i, j, x, y, self.T_star))
                     raise e
         return neighborhood
-
-    def boundary_transform(self, i, j):
-        if self.boundary_conditions == 'mirror':
-            if i < 0:
-                i = -i
-            if j < 0:
-                j = -j
-            if i >= self.size_x:
-                i = self.size_x - i % self.size_x - 1
-            if j >= self.size_y:
-                j = self.size_y - j % self.size_y - 1
-
-        if self.boundary_conditions == 'periodic':
-            if i < 0:
-                i = self.size_x + i
-            if j < 0:
-                j = self.size_y + j
-            if i >= self.size_x:
-                i = i - self.size_x
-            if j >= self.size_y:
-                j = j - self.size_y
-        return i, j
 
     def is_any_neighbor_built(self, x, y):
         return (self.map[x - 1][y].is_built or self.map[x + 1][y].is_built or self.map[x][y - 1].is_built or
@@ -158,14 +117,52 @@ class Land:
         return np.sqrt((x_built[:, None] - x_nature) ** 2 + (y_built[:, None] - y_nature) ** 2).min(
             axis=1).max() <= self.T_star
 
+
+
+    def set_configuration_from_image(self, filepath):
+        array_map = import_2Darray_from_image(filepath)
+        for x in range(self.size_x):
+            for y in range(self.size_y):
+                if array_map[x, y] == 1:
+                    self.map[x][y].is_built = True
+                    self.map[x][y].is_centrality = True
+                    self.map[x][y].is_nature = False
+
+                if array_map[x, y] == 0:
+                    self.map[x][y].is_built = True
+                    self.map[x][y].is_centrality = False
+                    self.map[x][y].is_nature = False
+
+    def get_current_population(self):
+        tot_population = 0
+        for x in range(self.size_x):
+            for y in range(self.size_y):
+                tot_population += self.map[x][y].inhabitants
+        return tot_population
+
+
+def d(x1, y1, x2, y2):
+    return np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
+
+def is_nature_wide_along_axis(array_1d, T_star):
+    features, labels = label(array_1d)
+    unique, counts = np.unique(features, return_counts=True)
+    if len(counts) > 1:
+        return counts[1:].min() >= T_star
+    else:
+        return True
+
+
+class IsobenefitScenario(Land):
     def update_map(self):
         added_blocks = 0
         added_centrality = 0
         copy_land = copy.deepcopy(self)
-        for x in range(self.size_x):
-            for y in range(self.size_y):
+        for x in range(self.T_star, self.size_x - self.T_star):
+            for y in range(self.T_star,self.size_y - self.T_star):
                 block = self.map[x][y]
-                assert (block.is_nature and not block.is_built) or (
+                assert (block.is_nature  and not block.is_built) or (
                         block.is_built and not block.is_nature), f"({x},{y}) block has ambiguous coordinates"
                 if block.is_nature:
                     neighborhood = copy_land.get_neighborhood(x, y)
@@ -174,7 +171,7 @@ class Land:
                             if self.is_nature_extended(x, y):
                                 if np.random.rand() < self.build_probability:
                                     if self.is_nature_reachable(x, y):
-                                        random_factor = np.random.choice([1,0.1,0.001],p=[0.7,0.3,0])
+                                        random_factor = np.random.choice([1, 0.1, 0.001], p=[0.7, 0.3, 0])
                                         block.is_nature = False
                                         block.is_built = True
                                         block.inhabitants = self.block_pop * random_factor
@@ -199,24 +196,8 @@ class Land:
         LOGGER.info(f"added blocks: {added_blocks}")
         LOGGER.info(f"added centralities: {added_centrality}")
 
-    def set_configuration_from_image(self, filepath):
-        array_map = import_2Darray_from_image(filepath)
-        for x in range(self.size_x):
-            for y in range(self.size_y):
-                if array_map[x, y] == 1:
-                    self.map[x][y].is_built = True
-                    self.map[x][y].is_centrality = True
-                    self.map[x][y].is_nature = False
-
-                if array_map[x, y] == 0:
-                    self.map[x][y].is_built = True
-                    self.map[x][y].is_centrality = False
-                    self.map[x][y].is_nature = False
 
 
-    def get_current_population(self):
-        tot_population = 0
-        for x in range(self.size_x):
-            for y in range(self.size_y):
-                tot_population+=self.map[x][y].inhabitants
-        return tot_population
+class StandardScenario(Land):
+    def update_map(self):
+        pass

@@ -54,23 +54,11 @@ def create_arg_parser():
                         default=1e-1,
                         help="probability of building a new centrality in a natural area")
 
-    parser.add_argument('--minimum-area',
-                        required=False,
-                        type=int,
-                        default=100,
-                        help="minimum continuous area to be preserved as nature")
-
     parser.add_argument('--T',
                         required=False,
                         type=int,
                         default=10,
                         help="standard maximum distance from centralities and nature")
-
-    parser.add_argument('--boundary-conditions',
-                        required=False,
-                        type=str,
-                        default='mirror',
-                        help="the boundary conditions of the land, possible options are 'mirror' and 'periodic'")
 
     parser.add_argument('--random-seed',
                         required=False,
@@ -99,6 +87,13 @@ def create_arg_parser():
                         type=int,
                         default=10000,
                         help="maximum population density (ab/km^2) in the simulation")
+
+    parser.add_argument('--urbanism-model',
+                        required=False,
+                        type=str,
+                        default='isobenefit',
+                        help="City urbanism model. Choose one of 'isobenefit' and 'standard'")
+
     return parser
 
 
@@ -109,10 +104,8 @@ if __name__ == "__main__":
     size_y = args.size_y
     n_steps = args.n_steps
     output_path = args.output_path
-    boundary_conditions = args.boundary_conditions
     build_probability = args.build_probability
     T = args.T
-    minimum_area = args.minimum_area
     random_seed = args.random_seed
     input_file_path = args.input_filepath
     initialization_mode = args.initialization_mode
@@ -120,12 +113,12 @@ if __name__ == "__main__":
     isolated_centrality_probability = args.isolated_centrality_probability
     max_population = args.max_population
     max_ab_km2 = args.max_ab_km2
+    urbanism_model=args.urbanism_model
     LOGGER.info(args)
     run_isobenefit_simulation(size_x=size_x, size_y=size_y, n_steps=n_steps, output_path=output_path,
-                              boundary_conditions=boundary_conditions, build_probability=build_probability,
+                              build_probability=build_probability,
                               neighboring_centrality_probability=neighboring_centrality_probability,
                               isolated_centrality_probability=isolated_centrality_probability, T_star=T,
-                              minimum_area=minimum_area,
                               random_seed=random_seed, input_filepath=input_file_path,
                               initialization_mode=initialization_mode, max_population=max_population,
-                              max_ab_km2=max_ab_km2)
+                              max_ab_km2=max_ab_km2, urbanism_model=urbanism_model)

@@ -6,15 +6,15 @@ import numpy as np
 from isobenefit_cities import logger
 from isobenefit_cities.image_io import save_image_from_2Darray
 from isobenefit_cities.initialization_utils import get_central_coord
-from isobenefit_cities.land_map import Land, MapBlock
+from isobenefit_cities.land_map import MapBlock, IsobenefitScenario, StandardScenario
 
 N_AMENITIES = 1
 
 
-def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, boundary_conditions, build_probability,
-                              neighboring_centrality_probability, isolated_centrality_probability, T_star, minimum_area,
+def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, build_probability,
+                              neighboring_centrality_probability, isolated_centrality_probability, T_star,
                               random_seed,
-                              input_filepath, initialization_mode, max_population, max_ab_km2):
+                              input_filepath, initialization_mode, max_population, max_ab_km2, urbanism_model):
     metadata = {}
     logger.configure_logging()
     LOGGER = logger.get_logger()
@@ -27,12 +27,11 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, boundary_con
     t_zero = time.time()
     land = initialize_land(size_x, size_y,
                            amenities_list=get_central_coord(size_x=size_x, size_y=size_y),
-                           boundary_conditions=boundary_conditions,
                            neighboring_centrality_probability=neighboring_centrality_probability,
                            isolated_centrality_probability=isolated_centrality_probability,
-                           build_probability=build_probability, T=T_star, minimum_area=minimum_area,
+                           build_probability=build_probability, T=T_star,
                            mode=initialization_mode,
-                           filepath=input_filepath, max_population=max_population, max_ab_km2=max_ab_km2)
+                           filepath=input_filepath, max_population=max_population, max_ab_km2=max_ab_km2, urbanism_model=urbanism_model)
 
     canvas = np.ones(shape=(size_x, size_y)) * 0.5
     update_map_snapshot(land, canvas)
@@ -52,13 +51,26 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, boundary_con
     LOGGER.info(f"Simulation ended. Total duration: {time.time()-t_zero} seconds")
 
 
-def initialize_land(size_x, size_y, boundary_conditions, build_probability, neighboring_centrality_probability,
-                    isolated_centrality_probability, T, minimum_area, max_population, max_ab_km2, mode=None, filepath=None,
-                    amenities_list=None):
-    land = Land(size_x=size_x, size_y=size_y, boundary_conditions=boundary_conditions,
-                neighboring_centrality_probability=neighboring_centrality_probability,
-                isolated_centrality_probability=isolated_centrality_probability,
-                build_probability=build_probability, T_star=T, minimum_area=minimum_area, max_population=max_population, max_ab_km2=max_ab_km2)
+def initialize_land(size_x, size_y, build_probability, neighboring_centrality_probability,
+                    isolated_centrality_probability, T, max_population, max_ab_km2, mode=None,
+                    filepath=None,
+                    amenities_list=None, urbanism_model='isobenefit'):
+    assert size_x > 2*T and size_y > 2*T, f"size of the map is too small: {size_x}x{size_y}. Dimensions should be larger than {2*T}"
+    if urbanism_model == 'isobenefit':
+        land = IsobenefitScenario(size_x=size_x, size_y=size_y,
+                                  neighboring_centrality_probability=neighboring_centrality_probability,
+                                  isolated_centrality_probability=isolated_centrality_probability,
+                                  build_probability=build_probability, T_star=T,
+                                  max_population=max_population, max_ab_km2=max_ab_km2)
+    elif urbanism_model == 'standard':
+        land = StandardScenario(size_x=size_x, size_y=size_y,
+                                neighboring_centrality_probability=neighboring_centrality_probability,
+                                isolated_centrality_probability=isolated_centrality_probability,
+                                build_probability=build_probability, T_star=T,
+                                max_population=max_population, max_ab_km2=max_ab_km2)
+    else:
+        raise("Invalid urbanism model. Choose one of 'isobenefit' and 'standard'")
+
     if mode == 'image' and filepath is not None:
         land.set_configuration_from_image(filepath)
     elif mode == 'list':

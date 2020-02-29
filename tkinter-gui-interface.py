@@ -7,7 +7,6 @@ args_list = [{'arg': 'size_x', 'name': 'X size', 'type': int},
              {'arg': 'n_steps', 'name': 'Iterartions', 'type': int},
              {'arg': 'max_population', 'name': 'Max Population', 'type': int},
              {'arg': 'max_ab_km2', 'name': 'Max ab/km^2', 'type': int},
-             {'arg': 'boundary_conditions', 'name': 'Boundary Conditions', 'type': str},
              {'arg': 'build_probability',
               'name': 'Build Block Probability',
               'type': float},
@@ -45,7 +44,7 @@ def simluation_wrapper(entries, argument_list, ):
     input_args = {}
     for argument in argument_list:
         input_args[argument['arg']] = argument['type'](entries[argument['arg']].get())
-    input_args.update({'minimum_area': 100, 'input_filepath': None, 'initialization_mode': 'list', 'output_path': None})
+    input_args.update({'input_filepath': None, 'initialization_mode': 'list', 'output_path': None})
     run_isobenefit_simulation(**input_args)
 
 
