@@ -1,3 +1,4 @@
+import json
 import os
 import time
 
@@ -15,15 +16,28 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, build_probab
                               neighboring_centrality_probability, isolated_centrality_probability, T_star,
                               random_seed,
                               input_filepath, initialization_mode, max_population, max_ab_km2, urbanism_model):
-    metadata = {}
+    metadata = {'size_x': size_x,
+                'size_y': size_y,
+                'n_steps': n_steps,
+                'output_path': output_path,
+                'build_probability': build_probability,
+                'neighboring_centrality_probability': neighboring_centrality_probability,
+                'isolated_centrality_probability': isolated_centrality_probability,
+                'T_star': T_star,
+                'random_seed': random_seed,
+                'input_filepath': input_filepath,
+                'initialization_mode': initialization_mode,
+                'max_population': max_population,
+                'max_ab_km2': max_ab_km2,
+                'urbanism_model': urbanism_model}
     logger.configure_logging()
     LOGGER = logger.get_logger()
     np.random.seed(random_seed)
-    if output_path is None:
-        timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
-        output_path = f"simulations/{timestamp}"
+
+    output_path = make_output_path(output_path)
     os.makedirs(output_path)
-    metadata['output_path'] = output_path
+    save_metadata(metadata, output_path)
+
     t_zero = time.time()
     land = initialize_land(size_x, size_y,
                            amenities_list=get_central_coord(size_x=size_x, size_y=size_y),
@@ -34,7 +48,7 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, build_probab
                            filepath=input_filepath, max_population=max_population, max_ab_km2=max_ab_km2,
                            urbanism_model=urbanism_model)
 
-    canvas = np.ones(shape=(size_x, size_y,4))
+    canvas = np.ones(shape=(size_x, size_y, 4))
     update_map_snapshot(land, canvas)
     snapshot_path = save_snapshot(canvas, output_path=output_path, step=0)
     i = 0
@@ -50,6 +64,21 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, build_probab
         i += 1
 
     LOGGER.info(f"Simulation ended. Total duration: {time.time()-t_zero} seconds")
+
+
+def make_output_path(output_path):
+    if output_path is None:
+        timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
+        output_path = f"simulations/{timestamp}"
+
+    return output_path
+
+
+def save_metadata(metadata, output_path: str):
+    metadata['output_path'] = output_path
+    metadata_filepath = os.path.join(output_path, 'metadata.json')
+    with open(metadata_filepath, 'w') as f:
+        f.write(json.dumps(metadata))
 
 
 def initialize_land(size_x, size_y, build_probability, neighboring_centrality_probability,
@@ -87,11 +116,11 @@ def update_map_snapshot(land, canvas):
     for row in land.map:
         for block in row:
             if block.is_built:
-                color = np.ones(3) * (-0.1 * np.log10(block.inhabitants / land.block_pop))
+                color = np.ones(3) * (-0.33 * np.log10(block.inhabitants / land.block_pop))
                 if block.is_centrality:
                     color = np.ones(3)
             else:
-                color = (0 / 255, 158 / 255, 96 / 255)
+                color = (0 / 255, 158 / 255, 96 / 255)  # green
             canvas[block.y, block.x] = np.array([color[0], color[1], color[2], 1])
 
 

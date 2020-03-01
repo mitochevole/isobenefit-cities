@@ -21,6 +21,7 @@ class MapBlock:
         self.inhabitants = inhabitants
 
 
+
 class Land:
     def __init__(self, size_x, size_y, build_probability=0.5, neighboring_centrality_probability=5e-3,
                  isolated_centrality_probability=1e-1, T_star=10,
@@ -215,7 +216,7 @@ class StandardScenario(Land):
                     neighborhood = copy_land.get_neighborhood(x, y)
                     if neighborhood.is_any_neighbor_built(self.T_star, self.T_star):
                         if np.random.rand() < self.build_probability:
-                            random_factor = np.random.choice([1, 0.1, 0.001], p=[0.3,0.4,0.3])
+                            random_factor = np.random.choice([1, 0.1, 0.01], p=[0.3,0.4,0.3])
                             block.is_nature = False
                             block.is_built = True
                             block.inhabitants = self.block_pop * random_factor
@@ -228,6 +229,8 @@ class StandardScenario(Land):
                             block.is_nature = False
                             block.inhabitants = 0
                             added_centrality += 1
+                    else:
+
 
 
         LOGGER.info(f"added blocks: {added_blocks}")

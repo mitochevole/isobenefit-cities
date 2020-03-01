@@ -2,23 +2,24 @@ import tkinter as tk
 
 from isobenefit_cities.simulation import run_isobenefit_simulation
 
-args_list = [{'arg': 'urbanism_model', 'name': 'City development model', 'type': str},
-             {'arg': 'size_x', 'name': 'X size', 'type': int},
-             {'arg': 'size_y', 'name': 'Y size', 'type': int},
-             {'arg': 'n_steps', 'name': 'Iterartions', 'type': int},
-             {'arg': 'max_population', 'name': 'Max Population', 'type': int},
-             {'arg': 'max_ab_km2', 'name': 'Max ab/km^2', 'type': int},
+args_list = [{'arg': 'urbanism_model', 'name': 'City development model', 'type': str, 'default': 'isobenefit'},
+             {'arg': 'size_x', 'name': 'X size', 'type': int, 'default': 60},
+             {'arg': 'size_y', 'name': 'Y size', 'type': int, 'default': 60},
+             {'arg': 'n_steps', 'name': 'Iterartions', 'type': int, 'default': 20},
+             {'arg': 'max_population', 'name': 'Max Population', 'type': int, 'default': 100000},
+             {'arg': 'max_ab_km2', 'name': 'Max ab/km^2', 'type': int, 'default': 10000},
              {'arg': 'build_probability',
               'name': 'Build Block Probability',
-              'type': float},
+              'type': float, 'default': 0.3},
              {'arg': 'neighboring_centrality_probability',
               'name': 'New Centrality P1',
-              'type': float},
+              'type': float, 'default': 0.1},
              {'arg': 'isolated_centrality_probability',
               'name': 'New Centrality P2',
-              'type': float},
-             {'arg': 'T_star', 'name': 'T*', 'type': int},
-             {'arg': 'random_seed', 'name': 'random seed', 'type': int}]
+              'type': float, 'default': 0},
+             {'arg': 'T_star', 'name': 'T*', 'type': int, 'default': 5},
+             {'arg': 'random_seed', 'name': 'random seed', 'type': int, 'default': 42}
+             ]
 
 
 def make_interface(root, arguments_list):
@@ -28,7 +29,7 @@ def make_interface(root, arguments_list):
         row = tk.Frame(root)
         lab = tk.Label(row, width=22, text=field['name'] + ": ", anchor='w')
         ent = tk.Entry(row)
-        ent.insert(0, "0")
+        ent.insert(0, field['default'])
         row.pack(side=tk.TOP,
                  fill=tk.X,
                  padx=5,
