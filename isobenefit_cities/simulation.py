@@ -51,14 +51,14 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, build_probab
     canvas = np.ones(shape=(size_x, size_y, 4))
     update_map_snapshot(land, canvas)
     snapshot_path = save_snapshot(canvas, output_path=output_path, step=0)
+    land.set_current_counts()
     i = 0
-    current_population = 0
-    while i <= n_steps and current_population <= land.max_population:
+    while i <= n_steps and land.current_population <= land.max_population:
         start = time.time()
         land.update_map()
-        current_population = land.get_current_population()
+        land.set_current_counts()
         LOGGER.info(f"step: {i}, duration: {time.time() - start} seconds")
-        LOGGER.info(f"step: {i}, current population: {current_population} inhabitants")
+        LOGGER.info(f"step: {i}, current population: {land.current_population} inhabitants")
         update_map_snapshot(land, canvas)
         snapshot_path = save_snapshot(canvas, output_path=output_path, step=i + 1)
         i += 1
@@ -115,12 +115,18 @@ def initialize_land(size_x, size_y, build_probability, neighboring_centrality_pr
 def update_map_snapshot(land, canvas):
     for row in land.map:
         for block in row:
-            if block.is_built:
-                color = np.ones(3) * (-0.33 * np.log10(block.inhabitants / land.block_pop))
-                if block.is_centrality:
-                    color = np.ones(3)
-            else:
+            if block.is_nature:
                 color = (0 / 255, 158 / 255, 96 / 255)  # green
+            elif block.is_centrality:
+                color = np.ones(3)
+            else:
+                if block.is_built and block.density_level=='high':
+                    color = np.zeros(3)
+                if block.is_built and block.density_level=='medium':
+                    color = np.ones(3)/3
+                if block.is_built and block.density_level=='low':
+                    color = np.ones(3)*2/3
+
             canvas[block.y, block.x] = np.array([color[0], color[1], color[2], 1])
 
 
