@@ -21,10 +21,29 @@ args_list = [{'arg': 'urbanism_model', 'name': 'City development model', 'type':
              {'arg': 'random_seed', 'name': 'random seed', 'type': int, 'default': 42}
              ]
 
+string_inputs = [{'arg': 'size_x', 'name': 'X size', 'type': int, 'default': 60},
+             {'arg': 'size_y', 'name': 'Y size', 'type': int, 'default': 60},
+             {'arg': 'n_steps', 'name': 'Iterartions', 'type': int, 'default': 20},
+             {'arg': 'max_population', 'name': 'Max Population', 'type': int, 'default': 100000},
+             {'arg': 'max_ab_km2', 'name': 'Max ab/km^2', 'type': int, 'default': 10000},
+             {'arg': 'build_probability',
+              'name': 'Build Block Probability',
+              'type': float, 'default': 0.3},
+             {'arg': 'neighboring_centrality_probability',
+              'name': 'New Centrality P1',
+              'type': float, 'default': 0.1},
+             {'arg': 'isolated_centrality_probability',
+              'name': 'New Centrality P2',
+              'type': float, 'default': 0},
+             {'arg': 'T_star', 'name': 'T*', 'type': int, 'default': 5},
+             {'arg': 'random_seed', 'name': 'random seed', 'type': int, 'default': 42}
+             ]
 
-def make_interface(root, arguments_list):
+
+def make_interface(root, string_arguments_list):
     entries = {}
-    for field in arguments_list:
+    entries['urbanism_model'] = make_radio_button()
+    for field in string_arguments_list:
         print(field)
         row = tk.Frame(root)
         lab = tk.Label(row, width=22, text=field['name'] + ": ", anchor='w')
@@ -42,6 +61,19 @@ def make_interface(root, arguments_list):
     return entries
 
 
+def make_radio_button():
+    urbanism_model = tk.StringVar(value="isobenefit")
+    radio_buttons = tk.Frame(root)
+    radio_buttons.pack()
+    isobenefit_button = tk.Radiobutton(radio_buttons, text="isobenefit", variable=urbanism_model,
+                                       indicatoron=1, value="isobenefit", width=12)
+    classical_button = tk.Radiobutton(radio_buttons, text="classical", variable=urbanism_model,
+                                      indicatoron=1, value="classical", width=12)
+    isobenefit_button.pack(side="left")
+    classical_button.pack(side="right")
+    return urbanism_model
+
+
 def simluation_wrapper(entries, argument_list):
     input_args = {}
     for argument in argument_list:
@@ -52,7 +84,9 @@ def simluation_wrapper(entries, argument_list):
 
 if __name__ == '__main__':
     root = tk.Tk()
-    ents = make_interface(root, args_list)
+
+    ents = make_interface(root, string_inputs)
+    print(ents)
     b1 = tk.Button(root, text='Run simulation',
                    command=(lambda e=ents: simluation_wrapper(e, args_list)))
     b1.pack(side=tk.LEFT, padx=5, pady=5)

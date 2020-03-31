@@ -208,7 +208,7 @@ class IsobenefitScenario(Land):
         LOGGER.info(f"added centralities: {added_centrality}")
 
 
-class StandardScenario(Land):
+class ClassicalScenario(Land):
     def is_any_neighbor_centrality(self, x, y):
         return (self.map[x - 1][y].is_centrality or self.map[x + 1][y].is_centrality or self.map[x][
             y - 1].is_centrality or
@@ -232,6 +232,15 @@ class StandardScenario(Land):
                             block.is_built = True
                             block.set_block_population(self.block_pop, density_level)
                             added_blocks += 1
+
+                    #todo fix generation of new centralities away from main centre
+                    else:
+                        if np.random.rand() < self.isolated_centrality_probability / np.sqrt(self.size_x * self.size_y) and (self.current_built_blocks/self.current_centralities) > 100:
+                            block.is_centrality = True
+                            block.is_built = True
+                            block.is_nature = False
+                            block.set_block_population(self.block_pop, 'empty')
+                            added_centrality += 1
                 else:
                     if not block.is_centrality:
                         if block.density_level == 'low':
@@ -249,7 +258,7 @@ class StandardScenario(Land):
                                     block.set_block_population(self.block_pop, 'empty')
                                     added_centrality += 1
                             else:
-                                if np.random.rand() < self.isolated_centrality_probability:
+                                if np.random.rand() < self.isolated_centrality_probability:#/np.sqrt(self.current_built_blocks):
                                     block.is_centrality = True
                                     block.is_built = True
                                     block.is_nature = False

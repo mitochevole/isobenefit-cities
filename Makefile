@@ -11,5 +11,5 @@ create-and-install:
 	make install
 
 run-gui:
-	python tkinter-gui-interface.py
+	python scripts/tkinter-gui-interface.py
 

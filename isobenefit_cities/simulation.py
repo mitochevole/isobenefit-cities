@@ -7,7 +7,7 @@ import numpy as np
 from isobenefit_cities import logger
 from isobenefit_cities.image_io import save_image_from_2Darray
 from isobenefit_cities.initialization_utils import get_central_coord
-from isobenefit_cities.land_map import MapBlock, IsobenefitScenario, StandardScenario
+from isobenefit_cities.land_map import MapBlock, IsobenefitScenario, ClassicalScenario
 
 N_AMENITIES = 1
 
@@ -92,14 +92,14 @@ def initialize_land(size_x, size_y, build_probability, neighboring_centrality_pr
                                   isolated_centrality_probability=isolated_centrality_probability,
                                   build_probability=build_probability, T_star=T,
                                   max_population=max_population, max_ab_km2=max_ab_km2)
-    elif urbanism_model == 'standard':
-        land = StandardScenario(size_x=size_x, size_y=size_y,
-                                neighboring_centrality_probability=neighboring_centrality_probability,
-                                isolated_centrality_probability=isolated_centrality_probability,
-                                build_probability=build_probability, T_star=T,
-                                max_population=max_population, max_ab_km2=max_ab_km2)
+    elif urbanism_model == 'classical':
+        land = ClassicalScenario(size_x=size_x, size_y=size_y,
+                                 neighboring_centrality_probability=neighboring_centrality_probability,
+                                 isolated_centrality_probability=isolated_centrality_probability,
+                                 build_probability=build_probability, T_star=T,
+                                 max_population=max_population, max_ab_km2=max_ab_km2)
     else:
-        raise ("Invalid urbanism model. Choose one of 'isobenefit' and 'standard'")
+        raise ("Invalid urbanism model. Choose one of 'isobenefit' and 'classical'")
 
     if mode == 'image' and filepath is not None:
         land.set_configuration_from_image(filepath)
