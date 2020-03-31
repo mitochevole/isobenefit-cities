@@ -62,15 +62,22 @@ def make_interface(root, string_arguments_list):
 
 
 def make_radio_button():
+    row = tk.Frame(root)
     urbanism_model = tk.StringVar(value="isobenefit")
-    radio_buttons = tk.Frame(root)
-    radio_buttons.pack()
+    lab = tk.Label(row, width=22, text="City development model:", anchor='w')
+    radio_buttons = tk.Frame(row)
     isobenefit_button = tk.Radiobutton(radio_buttons, text="isobenefit", variable=urbanism_model,
-                                       indicatoron=1, value="isobenefit", width=12)
+                                       indicatoron=0, value="isobenefit", width=12)
     classical_button = tk.Radiobutton(radio_buttons, text="classical", variable=urbanism_model,
-                                      indicatoron=1, value="classical", width=12)
+                                      indicatoron=0, value="classical", width=12)
     isobenefit_button.pack(side="left")
     classical_button.pack(side="right")
+    radio_buttons.pack(side='right')
+    row.pack(side=tk.TOP,
+             fill=tk.X,
+             padx=5,
+             pady=5)
+    lab.pack(side=tk.LEFT)
     return urbanism_model
 
 
