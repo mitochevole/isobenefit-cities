@@ -51,19 +51,26 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, build_probab
     canvas = np.ones(shape=(size_x, size_y, 4))
     update_map_snapshot(land, canvas)
     snapshot_path = save_snapshot(canvas, output_path=output_path, step=0)
+    land.set_record_counts_header(output_path=output_path)
     land.set_current_counts()
     i = 0
+    added_blocks, added_centralities = (0, 0)
+    land.record_current_counts(output_path=output_path, iteration=i, added_blocks=added_blocks,
+                               added_centralities=added_centralities)
+
     while i <= n_steps and land.current_population <= land.max_population:
         start = time.time()
-        land.update_map()
+        added_blocks, added_centralities = land.update_map()
         land.set_current_counts()
+        i += 1
+        land.record_current_counts(output_path=output_path, iteration=i, added_blocks=added_blocks,
+                                   added_centralities=added_centralities)
         LOGGER.info(f"step: {i}, duration: {time.time() - start} seconds")
         LOGGER.info(f"step: {i}, current population: {land.current_population} inhabitants")
         update_map_snapshot(land, canvas)
-        snapshot_path = save_snapshot(canvas, output_path=output_path, step=i + 1)
-        i += 1
+        snapshot_path = save_snapshot(canvas, output_path=output_path, step=i)
 
-    LOGGER.info(f"Simulation ended. Total duration: {time.time()-t_zero} seconds")
+    LOGGER.info(f"Simulation ended. Total duration: {time.time() - t_zero} seconds")
 
 
 def make_output_path(output_path):
@@ -85,7 +92,7 @@ def initialize_land(size_x, size_y, build_probability, neighboring_centrality_pr
                     isolated_centrality_probability, T, max_population, max_ab_km2, mode=None,
                     filepath=None,
                     amenities_list=None, urbanism_model='isobenefit'):
-    assert size_x > 2 * T and size_y > 2 * T, f"size of the map is too small: {size_x}x{size_y}. Dimensions should be larger than {2*T}"
+    assert size_x > 2 * T and size_y > 2 * T, f"size of the map is too small: {size_x}x{size_y}. Dimensions should be larger than {2 * T}"
     if urbanism_model == 'isobenefit':
         land = IsobenefitScenario(size_x=size_x, size_y=size_y,
                                   neighboring_centrality_probability=neighboring_centrality_probability,
@@ -120,12 +127,12 @@ def update_map_snapshot(land, canvas):
             elif block.is_centrality:
                 color = np.ones(3)
             else:
-                if block.is_built and block.density_level=='high':
+                if block.is_built and block.density_level == 'high':
                     color = np.zeros(3)
-                if block.is_built and block.density_level=='medium':
-                    color = np.ones(3)/3
-                if block.is_built and block.density_level=='low':
-                    color = np.ones(3)*2/3
+                if block.is_built and block.density_level == 'medium':
+                    color = np.ones(3) / 3
+                if block.is_built and block.density_level == 'low':
+                    color = np.ones(3) * 2 / 3
 
             canvas[block.y, block.x] = np.array([color[0], color[1], color[2], 1])
 

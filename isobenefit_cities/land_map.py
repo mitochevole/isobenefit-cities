@@ -1,4 +1,5 @@
 import copy
+import os
 from functools import partial
 
 import numpy as np
@@ -149,6 +150,20 @@ class Land:
         self.current_built_blocks = tot_built
         self.current_free_nature = tot_nature
 
+    def set_record_counts_header(self, output_path):
+        filename = os.path.join(output_path, 'current_counts.txt')
+        with open(filename, "a") as f:
+            f.write(
+                "iteration,added_blocks,added_centralities,current_built_blocks,current_centralities,"
+                "current_free_nature,current_population\n")
+
+
+    def record_current_counts(self, output_path, iteration, added_blocks, added_centralities):
+        filename = os.path.join(output_path, 'current_counts.txt')
+        with open(filename, "a") as f:
+            f.write(
+                f"{iteration},{added_blocks},{added_centralities},{self.current_built_blocks},{self.current_centralities},{self.current_free_nature},{self.current_population}\n")
+
 
 def d(x1, y1, x2, y2):
     return np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
@@ -206,6 +221,7 @@ class IsobenefitScenario(Land):
                                     added_centrality += 1
         LOGGER.info(f"added blocks: {added_blocks}")
         LOGGER.info(f"added centralities: {added_centrality}")
+        return added_blocks, added_centrality
 
 
 class ClassicalScenario(Land):
@@ -233,9 +249,11 @@ class ClassicalScenario(Land):
                             block.set_block_population(self.block_pop, density_level)
                             added_blocks += 1
 
-                    #todo fix generation of new centralities away from main centre
+                    # todo fix generation of new centralities away from main centre
                     else:
-                        if np.random.rand() < self.isolated_centrality_probability / np.sqrt(self.size_x * self.size_y) and (self.current_built_blocks/self.current_centralities) > 100:
+                        if np.random.rand() < self.isolated_centrality_probability / np.sqrt(
+                                self.size_x * self.size_y) and (
+                                self.current_built_blocks / self.current_centralities) > 100:
                             block.is_centrality = True
                             block.is_built = True
                             block.is_nature = False
@@ -249,7 +267,8 @@ class ClassicalScenario(Land):
                         elif block.density_level == 'medium':
                             if np.random.rand() < 0.01:
                                 block.set_block_population(self.block_pop, 'high')
-                        elif block.density_level == 'high' and (self.current_built_blocks/self.current_centralities) > 100:
+                        elif block.density_level == 'high' and (
+                                self.current_built_blocks / self.current_centralities) > 100:
                             if self.is_any_neighbor_centrality(x, y):
                                 if np.random.rand() < self.neighboring_centrality_probability:
                                     block.is_centrality = True
@@ -258,7 +277,7 @@ class ClassicalScenario(Land):
                                     block.set_block_population(self.block_pop, 'empty')
                                     added_centrality += 1
                             else:
-                                if np.random.rand() < self.isolated_centrality_probability:#/np.sqrt(self.current_built_blocks):
+                                if np.random.rand() < self.isolated_centrality_probability:  # /np.sqrt(self.current_built_blocks):
                                     block.is_centrality = True
                                     block.is_built = True
                                     block.is_nature = False
@@ -267,3 +286,4 @@ class ClassicalScenario(Land):
 
         LOGGER.info(f"added blocks: {added_blocks}")
         LOGGER.info(f"added centralities: {added_centrality}")
+        return added_blocks, added_centrality
