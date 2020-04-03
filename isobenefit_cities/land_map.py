@@ -151,7 +151,7 @@ class Land:
         self.current_free_nature = tot_nature
 
     def set_record_counts_header(self, output_path):
-        filename = os.path.join(output_path, 'current_counts.txt')
+        filename = os.path.join(output_path, 'current_counts.csv')
         with open(filename, "a") as f:
             f.write(
                 "iteration,added_blocks,added_centralities,current_built_blocks,current_centralities,"
@@ -159,7 +159,7 @@ class Land:
 
 
     def record_current_counts(self, output_path, iteration, added_blocks, added_centralities):
-        filename = os.path.join(output_path, 'current_counts.txt')
+        filename = os.path.join(output_path, 'current_counts.csv')
         with open(filename, "a") as f:
             f.write(
                 f"{iteration},{added_blocks},{added_centralities},{self.current_built_blocks},{self.current_centralities},{self.current_free_nature},{self.current_population}\n")
