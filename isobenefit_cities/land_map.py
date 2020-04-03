@@ -1,28 +1,17 @@
 import copy
+import os
 from functools import partial
 
 import numpy as np
-from matplotlib import cm
 from scipy.ndimage.measurements import label
 
 from isobenefit_cities import logger
-from isobenefit_cities.image_io import save_image_from_2Darray, import_2Darray_from_image
+from isobenefit_cities.image_io import import_2Darray_from_image
 
 LOGGER = logger.get_logger()
 
-
-def d(x1, y1, x2, y2):
-    # return abs(x1-x2) + abs(y1-y2)
-    return np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
-
-
-def is_nature_wide_along_axis(array_1d, T_star):
-    features, labels = label(array_1d)
-    unique, counts = np.unique(features, return_counts=True)
-    if len(counts) > 1:
-        return counts[1:].min() >= T_star
-    else:
-        return True
+DENSITY_LEVELS = ['high', 'medium', 'low']
+POPULATION_DENSITY = {'high': 1, 'medium': 0.1, 'low': 0.01, 'empty': 0}
 
 
 class MapBlock:
@@ -34,26 +23,26 @@ class MapBlock:
         self.is_centrality = False
         self.inhabitants = inhabitants
 
+    def set_block_population(self, block_population, density_level):
+        self.inhabitants = block_population * POPULATION_DENSITY[density_level]
+        self.density_level = density_level
 
 
 class Land:
     def __init__(self, size_x, size_y, build_probability=0.5, neighboring_centrality_probability=5e-3,
-                 isolated_centrality_probability=1e-1, T_star=10, minimum_area=100, boundary_conditions='mirror',
+                 isolated_centrality_probability=1e-1, T_star=10,
                  max_population=500000, max_ab_km2=10000):
         self.size_x = size_x
         self.size_y = size_y
         self.T_star = T_star
         self.map = [[MapBlock(x, y, inhabitants=0) for x in range(size_y)] for y in range(size_x)]
-        self.boundary_conditions = boundary_conditions
-        self.minimum_area = minimum_area
         self.build_probability = build_probability
         self.neighboring_centrality_probability = neighboring_centrality_probability
         self.isolated_centrality_probability = isolated_centrality_probability
         self.max_population = max_population
-        #the assumption is that T_star is the number of blocks
+        # the assumption is that T_star is the number of blocks
         # that equals to a 15 minutes walk, i.e. roughly 1 km. 1 block has size 1000/T_star metres
-        self.block_pop = max_ab_km2/(T_star**2)
-
+        self.block_pop = max_ab_km2 / (T_star ** 2)
 
     def check_consistency(self):
         for x in range(self.size_x):
@@ -70,10 +59,6 @@ class Land:
                     A[x, y] = 0
         return A
 
-    def save_land(self, filepath, color_map=cm.gist_earth, format='png'):
-        land = self.get_map_as_array()
-        save_image_from_2Darray(land_array=land, filepath=filepath, color_map=color_map, format=format)
-
     def set_centralities(self, centralities: list):
         for centrality in centralities:
             x, y = centrality.x, centrality.y
@@ -86,35 +71,12 @@ class Land:
         neighborhood = Land(size_x=2 * self.T_star + 1, size_y=2 * self.T_star + 1, T_star=self.T_star)
         for i in range(x - self.T_star, x + self.T_star + 1):
             for j in range(y - self.T_star, y + self.T_star + 1):
-                i2, j2 = self.boundary_transform(i, j)
                 try:
-                    neighborhood.map[i + self.T_star - x][j + self.T_star - y] = self.map[i2][j2]
+                    neighborhood.map[i + self.T_star - x][j + self.T_star - y] = self.map[i][j]
                 except Exception as e:
-                    print("i: {}, j: {}, i2: {}, j2: {}, x: {}, y: {}, T: {}".format(i, j, i2, j2, x, y, self.T_star))
+                    print("i: {}, j: {}, x: {}, y: {}, T: {}".format(i, j, x, y, self.T_star))
                     raise e
         return neighborhood
-
-    def boundary_transform(self, i, j):
-        if self.boundary_conditions == 'mirror':
-            if i < 0:
-                i = -i
-            if j < 0:
-                j = -j
-            if i >= self.size_x:
-                i = self.size_x - i % self.size_x - 1
-            if j >= self.size_y:
-                j = self.size_y - j % self.size_y - 1
-
-        if self.boundary_conditions == 'periodic':
-            if i < 0:
-                i = self.size_x + i
-            if j < 0:
-                j = self.size_y + j
-            if i >= self.size_x:
-                i = i - self.size_x
-            if j >= self.size_y:
-                j = j - self.size_y
-        return i, j
 
     def is_any_neighbor_built(self, x, y):
         return (self.map[x - 1][y].is_built or self.map[x + 1][y].is_built or self.map[x][y - 1].is_built or
@@ -158,47 +120,6 @@ class Land:
         return np.sqrt((x_built[:, None] - x_nature) ** 2 + (y_built[:, None] - y_nature) ** 2).min(
             axis=1).max() <= self.T_star
 
-    def update_map(self):
-        added_blocks = 0
-        added_centrality = 0
-        copy_land = copy.deepcopy(self)
-        for x in range(self.size_x):
-            for y in range(self.size_y):
-                block = self.map[x][y]
-                assert (block.is_nature and not block.is_built) or (
-                        block.is_built and not block.is_nature), f"({x},{y}) block has ambiguous coordinates"
-                if block.is_nature:
-                    neighborhood = copy_land.get_neighborhood(x, y)
-                    if neighborhood.is_any_neighbor_built(self.T_star, self.T_star):
-                        if neighborhood.has_centrality_nearby():
-                            if self.is_nature_extended(x, y):
-                                if np.random.rand() < self.build_probability:
-                                    if self.is_nature_reachable(x, y):
-                                        random_factor = np.random.choice([1,0.1,0.001],p=[0.7,0.3,0])
-                                        block.is_nature = False
-                                        block.is_built = True
-                                        block.inhabitants = self.block_pop * random_factor
-                                        added_blocks += 1
-                        else:
-                            if np.random.rand() < self.neighboring_centrality_probability:
-                                if self.is_nature_extended(x, y):
-                                    if self.is_nature_reachable(x, y):
-                                        block.is_centrality = True
-                                        block.is_built = True
-                                        block.is_nature = False
-                                        added_centrality += 1
-
-                    else:
-                        if np.random.rand() < self.isolated_centrality_probability / (self.size_x * self.size_y):
-                            if self.is_nature_extended(x, y):
-                                if self.is_nature_reachable(x, y):
-                                    block.is_centrality = True
-                                    block.is_built = True
-                                    block.is_nature = False
-                                    added_centrality += 1
-        LOGGER.info(f"added blocks: {added_blocks}")
-        LOGGER.info(f"added centralities: {added_centrality}")
-
     def set_configuration_from_image(self, filepath):
         array_map = import_2Darray_from_image(filepath)
         for x in range(self.size_x):
@@ -213,10 +134,156 @@ class Land:
                     self.map[x][y].is_centrality = False
                     self.map[x][y].is_nature = False
 
-
-    def get_current_population(self):
+    def set_current_counts(self):
         tot_population = 0
+        tot_centralities = 0
+        tot_built = 0
+        tot_nature = 0
         for x in range(self.size_x):
             for y in range(self.size_y):
-                tot_population+=self.map[x][y].inhabitants
-        return tot_population
+                tot_population += self.map[x][y].inhabitants
+                tot_centralities += int(self.map[x][y].is_centrality)
+                tot_built += int(self.map[x][y].is_built)
+                tot_nature += int(self.map[x][y].is_nature)
+        self.current_population = tot_population
+        self.current_centralities = tot_centralities
+        self.current_built_blocks = tot_built
+        self.current_free_nature = tot_nature
+
+    def set_record_counts_header(self, output_path):
+        filename = os.path.join(output_path, 'current_counts.csv')
+        with open(filename, "a") as f:
+            f.write(
+                "iteration,added_blocks,added_centralities,current_built_blocks,current_centralities,"
+                "current_free_nature,current_population\n")
+
+
+    def record_current_counts(self, output_path, iteration, added_blocks, added_centralities):
+        filename = os.path.join(output_path, 'current_counts.csv')
+        with open(filename, "a") as f:
+            f.write(
+                f"{iteration},{added_blocks},{added_centralities},{self.current_built_blocks},{self.current_centralities},{self.current_free_nature},{self.current_population}\n")
+
+
+def d(x1, y1, x2, y2):
+    return np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
+
+def is_nature_wide_along_axis(array_1d, T_star):
+    features, labels = label(array_1d)
+    unique, counts = np.unique(features, return_counts=True)
+    if len(counts) > 1:
+        return counts[1:].min() >= T_star
+    else:
+        return True
+
+
+class IsobenefitScenario(Land):
+    def update_map(self):
+        added_blocks = 0
+        added_centrality = 0
+        copy_land = copy.deepcopy(self)
+        for x in range(self.T_star, self.size_x - self.T_star):
+            for y in range(self.T_star, self.size_y - self.T_star):
+                block = self.map[x][y]
+                assert (block.is_nature and not block.is_built) or (
+                        block.is_built and not block.is_nature), f"({x},{y}) block has ambiguous coordinates"
+                if block.is_nature:
+                    neighborhood = copy_land.get_neighborhood(x, y)
+                    if neighborhood.is_any_neighbor_built(self.T_star, self.T_star):
+                        if neighborhood.has_centrality_nearby():
+                            if self.is_nature_extended(x, y):
+                                if np.random.rand() < self.build_probability:
+                                    if self.is_nature_reachable(x, y):
+                                        density_level = np.random.choice(DENSITY_LEVELS, p=[0.7, 0.3, 0])
+                                        block.is_nature = False
+                                        block.is_built = True
+                                        block.set_block_population(self.block_pop, density_level)
+                                        added_blocks += 1
+                        else:
+                            if np.random.rand() < self.neighboring_centrality_probability:
+                                if self.is_nature_extended(x, y):
+                                    if self.is_nature_reachable(x, y):
+                                        block.is_centrality = True
+                                        block.is_built = True
+                                        block.is_nature = False
+                                        block.set_block_population(self.block_pop, 'empty')
+                                        added_centrality += 1
+
+                    else:
+                        if np.random.rand() < self.isolated_centrality_probability / (self.size_x * self.size_y):
+                            if self.is_nature_extended(x, y):
+                                if self.is_nature_reachable(x, y):
+                                    block.is_centrality = True
+                                    block.is_built = True
+                                    block.is_nature = False
+                                    block.set_block_population(self.block_pop, 'empty')
+                                    added_centrality += 1
+        LOGGER.info(f"added blocks: {added_blocks}")
+        LOGGER.info(f"added centralities: {added_centrality}")
+        return added_blocks, added_centrality
+
+
+class ClassicalScenario(Land):
+    def is_any_neighbor_centrality(self, x, y):
+        return (self.map[x - 1][y].is_centrality or self.map[x + 1][y].is_centrality or self.map[x][
+            y - 1].is_centrality or
+                self.map[x][y + 1].is_centrality)
+
+    def update_map(self):
+        added_blocks = 0
+        added_centrality = 0
+        copy_land = copy.deepcopy(self)
+        for x in range(self.T_star, self.size_x - self.T_star):
+            for y in range(self.T_star, self.size_y - self.T_star):
+                block = self.map[x][y]
+                assert (block.is_nature and not block.is_built) or (
+                        block.is_built and not block.is_nature), f"({x},{y}) block has ambiguous coordinates"
+                if block.is_nature:
+                    neighborhood = copy_land.get_neighborhood(x, y)
+                    if neighborhood.is_any_neighbor_built(self.T_star, self.T_star):
+                        if np.random.rand() < self.build_probability:
+                            density_level = np.random.choice(DENSITY_LEVELS, p=[0.01, 0.10, 0.89])
+                            block.is_nature = False
+                            block.is_built = True
+                            block.set_block_population(self.block_pop, density_level)
+                            added_blocks += 1
+
+                    # todo fix generation of new centralities away from main centre
+                    else:
+                        if np.random.rand() < self.isolated_centrality_probability / np.sqrt(
+                                self.size_x * self.size_y) and (
+                                self.current_built_blocks / self.current_centralities) > 100:
+                            block.is_centrality = True
+                            block.is_built = True
+                            block.is_nature = False
+                            block.set_block_population(self.block_pop, 'empty')
+                            added_centrality += 1
+                else:
+                    if not block.is_centrality:
+                        if block.density_level == 'low':
+                            if np.random.rand() < 0.1:
+                                block.set_block_population(self.block_pop, 'medium')
+                        elif block.density_level == 'medium':
+                            if np.random.rand() < 0.01:
+                                block.set_block_population(self.block_pop, 'high')
+                        elif block.density_level == 'high' and (
+                                self.current_built_blocks / self.current_centralities) > 100:
+                            if self.is_any_neighbor_centrality(x, y):
+                                if np.random.rand() < self.neighboring_centrality_probability:
+                                    block.is_centrality = True
+                                    block.is_built = True
+                                    block.is_nature = False
+                                    block.set_block_population(self.block_pop, 'empty')
+                                    added_centrality += 1
+                            else:
+                                if np.random.rand() < self.isolated_centrality_probability:  # /np.sqrt(self.current_built_blocks):
+                                    block.is_centrality = True
+                                    block.is_built = True
+                                    block.is_nature = False
+                                    block.set_block_population(self.block_pop, 'empty')
+                                    added_centrality += 1
+
+        LOGGER.info(f"added blocks: {added_blocks}")
+        LOGGER.info(f"added centralities: {added_centrality}")
+        return added_blocks, added_centrality
