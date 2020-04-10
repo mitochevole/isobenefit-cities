@@ -1,2 +1,9 @@
 .ipynb_checkpoints
+venv
 .idea
+*.egg
+simulations
+build
+isobenefit_cities.egg-info
+isobenefit_cities/__pycache__
+logs
