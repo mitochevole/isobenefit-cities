@@ -14,7 +14,7 @@ You will need [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Gi
 ### Install
 Navigate to the directory where you want to install the package and then clone the repository to the local folder of your choice via
 ```bash
-git clone git@gist.github.com:addNameHere.git
+git clone https://github.com/mitochevole/isobenefit-cities.git
 ```
 
 If you are using anaconda, create a new environment:
