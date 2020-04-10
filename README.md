@@ -27,9 +27,9 @@ then run `make install`
 
 ## Run the simulations
 
-Running `make run-gui` opens a `tk-inter`-based GUI 
 ![GUI interface](gui-interface-example.png?raw=true)
 
+Running `make run-gui` opens a `tk-inter`-based GUI 
 where you can: 
 - choose the type of development
 - set the size of the map both in X and Y direction in number of cells
