@@ -80,4 +80,3 @@ In the classical scenario cells can also be scarcely populated, having a density
 This repository gets its inspiration and it's driven by the work of [Luca D'Acci](https://sites.google.com/view/lucadacci).
 
 The code benefits of the comments and fruitful discussions with [Stefano Ugliano](https://about.me/stefanougliano).
-
