@@ -3,7 +3,7 @@
 throughout nature, with unplanned forms and unlimitedly extendible, 
 in which one does not need cars and can feel both urbanity and nature.*
 
-This project presents generative simulations of urban growth in the [isobenefit urbanism scenario](http://www.urem.eu/isobenefit/)
+This project presents generative simulations of urban growth in the [isobenefit urbanism scenario](https://lucadacci.wixsite.com/dacci/isobenefit-urbanism-morphogenesis)
 
 ## Getting started
 
