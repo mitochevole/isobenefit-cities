@@ -37,8 +37,8 @@ where you can:
 - set the maximum population that the simulation will reach
 - set the maximum population density
 - set the probability of building a new urban block (provided that all other conditions for constructions are satisfied)
-- set the probability of creating a new centrality adjacent to constructed areas
-- set the probability of creating a new isolated centrality
+- set the probability P1 of creating a new centrality adjacent to constructed areas
+- set the probability P2 of creating a new isolated centrality
 - set the size in units of simulation cells of the critical distance T*
 - random seed for the simulation
 
