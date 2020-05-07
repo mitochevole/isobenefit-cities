@@ -11,7 +11,11 @@ This project presents generative simulations of urban growth in the [isobenefit 
 
 You will need [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) and python installed, if don't have it on your machine already, the [anaconda distribution](https://docs.anaconda.com/anaconda/install/) is the easiest place to start.
 
+%% todo check if git included in anaconda installation 
+
+
 ### Install
+Open the terminal (On Windows search for `Anaconda Prompt`)
 Navigate to the directory where you want to install the package and then clone the repository to the local folder of your choice via
 ```bash
 git clone https://github.com/mitochevole/isobenefit-cities.git
@@ -23,7 +27,17 @@ conda create --name [my_env] python=3.6
 ```
 
 activate the environment typing `conda activate [my_env]`
+navigate inside the project directory 
+```bash
+cd isobenefit-cities
+```
+
 then run `make install`
+On windows if the `make` command is not available, run instead
+```bash
+pip install -r requirements.txt
+python setup.py develop
+```
 
 ## Run the simulations
 
@@ -42,7 +56,10 @@ where you can:
 - set the size in units of simulation cells of the critical distance T*
 - random seed for the simulation
 
-
+If again `make` is not available just run:
+```bash
+python scripts/tkinter-gui-interface.py
+```
 
 
 You can also run the simulations directly fom command line.
