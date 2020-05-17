@@ -130,8 +130,8 @@ def make_density_parameters_entries(root):
 def simluation_wrapper(entries, argument_list):
     input_args = {}
     print(entries)
-    for argument in argument_list:
-        input_args[argument['arg']] = argument['type'](entries[argument['arg']].get())
+    for entry_name, entry_widget in entries.items():
+        input_args[entry_name] = entry_widget.get()
     input_args.update({'input_filepath': None, 'initialization_mode': 'list', 'output_path': None})
     run_isobenefit_simulation(**input_args)
 
