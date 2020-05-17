@@ -42,7 +42,8 @@ string_inputs = [{'arg': 'size_x', 'name': 'X size', 'type': int, 'default': 60}
 
 def make_interface(root, string_arguments_list):
     entries = {}
-    entries['urbanism_model'] = make_radio_button()
+    entries['urbanism_model'] = make_radio_button(root)
+
     for field in string_arguments_list:
         print(field)
         row = tk.Frame(root)
@@ -58,10 +59,13 @@ def make_interface(root, string_arguments_list):
                  expand=tk.YES,
                  fill=tk.X)
         entries[field['arg']] = ent
+
+    density_parameters = make_density_parameters_entries(root)
+    entries.update(density_parameters)
     return entries
 
 
-def make_radio_button():
+def make_radio_button(root):
     row = tk.Frame(root)
     urbanism_model = tk.StringVar(value="isobenefit")
     lab = tk.Label(row, width=22, text="City development model:", anchor='w')
@@ -80,9 +84,52 @@ def make_radio_button():
     lab.pack(side=tk.LEFT)
     return urbanism_model
 
+def make_density_parameters_entries(root):
+    row = tk.Frame(root)
+    tk.Label(row, text="Probability").grid(row=0, column=1)
+    tk.Label(row, text="Dens. factor").grid(row=0, column=2)
+    tk.Label(row, text="High").grid(row=1, column=0)
+    tk.Label(row, text="Medium").grid(row=2, column=0)
+    tk.Label(row, text="Low").grid(row=3, column=0)
+
+    high_prob = tk.Entry(row)
+    medium_prob = tk.Entry(row)
+    low_prob = tk.Entry(row)
+
+    high_prob.insert(0,0.7)
+    medium_prob.insert(0,0.3)
+    low_prob.insert(0,0.)
+
+    high_factor = tk.Entry(row)
+    medium_factor = tk.Entry(row)
+    low_factor = tk.Entry(row)
+
+    high_factor.insert(0,1)
+    medium_factor.insert(0,0.1)
+    low_factor.insert(0,0.01)
+
+    high_prob.grid(row=1, column=1)
+    medium_prob.grid(row=2, column=1)
+    low_prob.grid(row=3, column=1)
+
+    high_factor.grid(row=1, column=2)
+    medium_factor.grid(row=2, column=2)
+    low_factor.grid(row=3, column=2)
+
+    row.pack(side=tk.TOP,
+             fill=tk.X,
+             padx=5,
+             pady=5)
+    density_paramenters = {'high_prob': high_prob, 'high_factor': high_factor,
+                           'medium_prob': medium_prob, 'medium_factor': medium_factor,
+                           'low_prob': low_prob, 'low_factor': low_factor}
+    return density_paramenters
+
+
 
 def simluation_wrapper(entries, argument_list):
     input_args = {}
+    print(entries)
     for argument in argument_list:
         input_args[argument['arg']] = argument['type'](entries[argument['arg']].get())
     input_args.update({'input_filepath': None, 'initialization_mode': 'list', 'output_path': None})
@@ -94,9 +141,9 @@ if __name__ == '__main__':
 
     ents = make_interface(root, string_inputs)
     print(ents)
-    b1 = tk.Button(root, text='Run simulation',
-                   command=(lambda e=ents: simluation_wrapper(e, args_list)))
-    b1.pack(side=tk.LEFT, padx=5, pady=5)
-    b3 = tk.Button(root, text='Quit', command=root.quit)
-    b3.pack(side=tk.LEFT, padx=5, pady=5)
+    run_button = tk.Button(root, text='Run simulation',
+                           command=(lambda e=ents: simluation_wrapper(e, args_list)))
+    run_button.pack(side=tk.LEFT, padx=5, pady=5)
+    quit_button = tk.Button(root, text='Quit', command=root.quit)
+    quit_button.pack(side=tk.LEFT, padx=5, pady=5)
     root.mainloop()

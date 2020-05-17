@@ -11,7 +11,6 @@ from isobenefit_cities.image_io import import_2Darray_from_image
 LOGGER = logger.get_logger()
 
 DENSITY_LEVELS = ['high', 'medium', 'low']
-POPULATION_DENSITY = {'high': 1, 'medium': 0.1, 'low': 0.01, 'empty': 0}
 
 
 class MapBlock:
@@ -23,15 +22,15 @@ class MapBlock:
         self.is_centrality = False
         self.inhabitants = inhabitants
 
-    def set_block_population(self, block_population, density_level):
-        self.inhabitants = block_population * POPULATION_DENSITY[density_level]
+    def set_block_population(self, block_population, density_level, population_density):
+        self.inhabitants = block_population * population_density[density_level]
         self.density_level = density_level
 
 
 class Land:
     def __init__(self, size_x, size_y, build_probability=0.5, neighboring_centrality_probability=5e-3,
                  isolated_centrality_probability=1e-1, T_star=10,
-                 max_population=500000, max_ab_km2=10000):
+                 max_population=500000, max_ab_km2=10000, probability_distribution=(0.7,0.3,0), density_factors=(1,0.1,0.01)):
         self.size_x = size_x
         self.size_y = size_y
         self.T_star = T_star
@@ -43,6 +42,8 @@ class Land:
         # the assumption is that T_star is the number of blocks
         # that equals to a 15 minutes walk, i.e. roughly 1 km. 1 block has size 1000/T_star metres
         self.block_pop = max_ab_km2 / (T_star ** 2)
+        self.probability_distribution = probability_distribution
+        self.population_density = {'high': density_factors[0], 'medium': density_factors[1], 'low': density_factors[2], 'empty': 0}
 
     def check_consistency(self):
         for x in range(self.size_x):
@@ -248,10 +249,10 @@ class IsobenefitScenario(Land):
                             if self.is_nature_extended(x, y):
                                 if np.random.rand() < self.build_probability:
                                     if self.is_nature_reachable(x, y):
-                                        density_level = np.random.choice(DENSITY_LEVELS, p=[0.7, 0.3, 0])
+                                        density_level = np.random.choice(DENSITY_LEVELS, p=self.probability_distribution)
                                         block.is_nature = False
                                         block.is_built = True
-                                        block.set_block_population(self.block_pop, density_level)
+                                        block.set_block_population(self.block_pop, density_level, self.population_density)
                                         added_blocks += 1
                         else:
                             if np.random.rand() < self.neighboring_centrality_probability:
@@ -260,7 +261,7 @@ class IsobenefitScenario(Land):
                                         block.is_centrality = True
                                         block.is_built = True
                                         block.is_nature = False
-                                        block.set_block_population(self.block_pop, 'empty')
+                                        block.set_block_population(self.block_pop, 'empty', self.population_density)
                                         added_centrality += 1
 
                     else:
@@ -270,7 +271,7 @@ class IsobenefitScenario(Land):
                                     block.is_centrality = True
                                     block.is_built = True
                                     block.is_nature = False
-                                    block.set_block_population(self.block_pop, 'empty')
+                                    block.set_block_population(self.block_pop, 'empty', self.population_density)
                                     added_centrality += 1
         LOGGER.info(f"added blocks: {added_blocks}")
         LOGGER.info(f"added centralities: {added_centrality}")
@@ -296,10 +297,10 @@ class ClassicalScenario(Land):
                     neighborhood = copy_land.get_neighborhood(x, y)
                     if neighborhood.is_any_neighbor_built(self.T_star, self.T_star):
                         if np.random.rand() < self.build_probability:
-                            density_level = np.random.choice(DENSITY_LEVELS, p=[0.01, 0.10, 0.89])
+                            density_level = np.random.choice(DENSITY_LEVELS, p=self.probability_distribution)
                             block.is_nature = False
                             block.is_built = True
-                            block.set_block_population(self.block_pop, density_level)
+                            block.set_block_population(self.block_pop, density_level, self.population_density)
                             added_blocks += 1
 
                     # todo fix generation of new centralities away from main centre
@@ -310,16 +311,16 @@ class ClassicalScenario(Land):
                             block.is_centrality = True
                             block.is_built = True
                             block.is_nature = False
-                            block.set_block_population(self.block_pop, 'empty')
+                            block.set_block_population(self.block_pop, 'empty', self.population_density)
                             added_centrality += 1
                 else:
                     if not block.is_centrality:
                         if block.density_level == 'low':
                             if np.random.rand() < 0.1:
-                                block.set_block_population(self.block_pop, 'medium')
+                                block.set_block_population(self.block_pop, 'medium', self.population_density)
                         elif block.density_level == 'medium':
                             if np.random.rand() < 0.01:
-                                block.set_block_population(self.block_pop, 'high')
+                                block.set_block_population(self.block_pop, 'high', self.population_density)
                         elif block.density_level == 'high' and (
                                 self.current_built_blocks / self.current_centralities) > 100:
                             if self.is_any_neighbor_centrality(x, y):
@@ -327,14 +328,14 @@ class ClassicalScenario(Land):
                                     block.is_centrality = True
                                     block.is_built = True
                                     block.is_nature = False
-                                    block.set_block_population(self.block_pop, 'empty')
+                                    block.set_block_population(self.block_pop, 'empty', self.population_density)
                                     added_centrality += 1
                             else:
                                 if np.random.rand() < self.isolated_centrality_probability:  # /np.sqrt(self.current_built_blocks):
                                     block.is_centrality = True
                                     block.is_built = True
                                     block.is_nature = False
-                                    block.set_block_population(self.block_pop, 'empty')
+                                    block.set_block_population(self.block_pop, 'empty', self.population_density)
                                     added_centrality += 1
 
         LOGGER.info(f"added blocks: {added_blocks}")
