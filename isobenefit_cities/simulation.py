@@ -49,7 +49,7 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, build_probab
                            build_probability=build_probability, T=T_star,
                            mode=initialization_mode,
                            filepath=input_filepath, max_population=max_population, max_ab_km2=max_ab_km2,
-                           urbanism_model=urbanism_model)
+                           urbanism_model=urbanism_model, prob_distribution=prob_distribution, density_factors=density_factors)
 
     canvas = np.ones(shape=(size_x, size_y, 4))
     update_map_snapshot(land, canvas)
@@ -92,25 +92,29 @@ def save_metadata(metadata, output_path: str):
 
 
 def initialize_land(size_x, size_y, build_probability, neighboring_centrality_probability,
-                    isolated_centrality_probability, T, max_population, max_ab_km2, mode=None,
-                    filepath=None,
-                    amenities_list=None, urbanism_model='isobenefit', prob_distribution=(0.7,0.3,0), density_factors=(1,0.1,0.01)):
+                    isolated_centrality_probability, T, max_population, max_ab_km2, mode,
+                    filepath,
+                    amenities_list, urbanism_model, prob_distribution, density_factors):
     assert size_x > 2 * T and size_y > 2 * T, f"size of the map is too small: {size_x}x{size_y}. Dimensions should be larger than {2 * T}"
-    assert sum(prob_distribution) == 1, f"pobability distribution does not sum-up to 1: sum{prob_distribution} = {sum(prob_distribution)}."
-    assert density_factors[0] >= density_factors[1] >= density_factors[2], f"density factors are not decreasing in value: {density_factors}."
+    assert sum(
+        prob_distribution) == 1, f"pobability distribution does not sum-up to 1: sum{prob_distribution} = {sum(prob_distribution)}."
+    assert density_factors[0] >= density_factors[1] >= density_factors[
+        2], f"density factors are not decreasing in value: {density_factors}."
 
     if urbanism_model == 'isobenefit':
         land = IsobenefitScenario(size_x=size_x, size_y=size_y,
                                   neighboring_centrality_probability=neighboring_centrality_probability,
                                   isolated_centrality_probability=isolated_centrality_probability,
                                   build_probability=build_probability, T_star=T,
-                                  max_population=max_population, max_ab_km2=max_ab_km2)
+                                  max_population=max_population, max_ab_km2=max_ab_km2,
+                                  prob_distribution=prob_distribution, density_factors=density_factors)
     elif urbanism_model == 'classical':
         land = ClassicalScenario(size_x=size_x, size_y=size_y,
                                  neighboring_centrality_probability=neighboring_centrality_probability,
                                  isolated_centrality_probability=isolated_centrality_probability,
                                  build_probability=build_probability, T_star=T,
-                                 max_population=max_population, max_ab_km2=max_ab_km2)
+                                 max_population=max_population, max_ab_km2=max_ab_km2,
+                                 prob_distribution=prob_distribution, density_factors=density_factors)
     else:
         raise ("Invalid urbanism model. Choose one of 'isobenefit' and 'classical'")
 
