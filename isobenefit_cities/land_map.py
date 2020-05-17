@@ -30,7 +30,7 @@ class MapBlock:
 class Land:
     def __init__(self, size_x, size_y, build_probability=0.5, neighboring_centrality_probability=5e-3,
                  isolated_centrality_probability=1e-1, T_star=10,
-                 max_population=500000, max_ab_km2=10000, probability_distribution=(0.7,0.3,0), density_factors=(1,0.1,0.01)):
+                 max_population=500000, max_ab_km2=10000, prob_distribution=(0.7, 0.3, 0), density_factors=(1, 0.1, 0.01)):
         self.size_x = size_x
         self.size_y = size_y
         self.T_star = T_star
@@ -42,7 +42,7 @@ class Land:
         # the assumption is that T_star is the number of blocks
         # that equals to a 15 minutes walk, i.e. roughly 1 km. 1 block has size 1000/T_star metres
         self.block_pop = max_ab_km2 / (T_star ** 2)
-        self.probability_distribution = probability_distribution
+        self.probability_distribution = prob_distribution
         self.population_density = {'high': density_factors[0], 'medium': density_factors[1], 'low': density_factors[2], 'empty': 0}
 
     def check_consistency(self):

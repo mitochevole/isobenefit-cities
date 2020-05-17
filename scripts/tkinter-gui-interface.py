@@ -133,12 +133,12 @@ def simluation_wrapper(entries, arguments_types):
     for entry_name, entry_widget in entries.items():
         print(entry_name)
         _dtype = arguments_types[entry_name]
-        if entry_name == 'probability':
+        if entry_name == 'prob_distribution':
             print(entry_widget)
             input_args['prob_distribution'] = (
             _dtype(entry_widget['high_prob'].get()), _dtype(entry_widget['medium_prob'].get()),
             _dtype(entry_widget['low_prob'].get()))
-        elif entry_name == 'density':
+        elif entry_name == 'density_factors':
             input_args['density_factors'] = (
             _dtype(entry_widget['high_factor'].get()), _dtype(entry_widget['medium_factor'].get()),
             _dtype(entry_widget['low_factor'].get()))
