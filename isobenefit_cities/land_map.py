@@ -139,30 +139,83 @@ class Land:
         tot_centralities = 0
         tot_built = 0
         tot_nature = 0
+        tot_distance_from_nature = 0
+        tot_distance_from_centrality = 0
+        tot_inhabited_blocks = 0
         for x in range(self.size_x):
             for y in range(self.size_y):
                 tot_population += self.map[x][y].inhabitants
                 tot_centralities += int(self.map[x][y].is_centrality)
                 tot_built += int(self.map[x][y].is_built)
                 tot_nature += int(self.map[x][y].is_nature)
+                if self.map[x][y].is_built and not self.map[x][y].is_centrality:
+                    tot_inhabited_blocks += 1
+                    min_nature_dist, min_centr_dist = self.get_min_distances(x, y)
+                    tot_distance_from_nature += min_nature_dist
+                    tot_distance_from_centrality += min_centr_dist
         self.current_population = tot_population
         self.current_centralities = tot_centralities
         self.current_built_blocks = tot_built
         self.current_free_nature = tot_nature
+        if tot_inhabited_blocks == 0:
+            self.avg_dist_from_nature = 0
+            self.avg_dist_from_centr = 0
+        else:
+            self.avg_dist_from_nature = tot_distance_from_nature / tot_inhabited_blocks
+            self.avg_dist_from_centr = tot_distance_from_centrality / tot_inhabited_blocks
+
+    def get_min_distances(self, x, y):
+        r = 1
+        nature_dist = np.inf
+        centrality_dist = np.inf
+        while (nature_dist == np.inf or centrality_dist == np.inf):
+            for i in range(x - r, x + r + 1):
+                for j in [y - r, y + r]:
+                    i, j = self.adjust_boundary_coords(i, j)
+                    if self.map[i][j].is_nature:
+                        nature_dist = min(nature_dist, d(x, y, i, j))
+                    if self.map[i][j].is_centrality:
+                        centrality_dist = min(centrality_dist, d(x, y, i, j))
+            for j in range(y - r + 1, y + r - 1 + 1):
+                for i in [x - r, x + r]:
+                    i, j = self.adjust_boundary_coords(i, j)
+                    if self.map[i][j].is_nature:
+                        nature_dist = d(x, y, i, j)
+                    if self.map[i][j].is_centrality:
+                        centrality_dist = d(x, y, i, j)
+            r += 1
+        return nature_dist, centrality_dist
+
+    def adjust_boundary_coords(self, i, j):
+        if i < 0:
+            i_new = 0
+        elif i >= self.size_x:
+            i_new = self.size_x - 1
+        else:
+            i_new = i
+        if j < 0:
+            j_new = 0
+        elif j >= self.size_y:
+            j_new = self.size_y - 1
+        else:
+            j_new = j
+        return i_new, j_new
 
     def set_record_counts_header(self, output_path):
         filename = os.path.join(output_path, 'current_counts.csv')
         with open(filename, "a") as f:
             f.write(
                 "iteration,added_blocks,added_centralities,current_built_blocks,current_centralities,"
-                "current_free_nature,current_population\n")
-
+                "current_free_nature,current_population,avg_dist_from_nature,avg_dist_from_centr\n")
 
     def record_current_counts(self, output_path, iteration, added_blocks, added_centralities):
         filename = os.path.join(output_path, 'current_counts.csv')
         with open(filename, "a") as f:
             f.write(
-                f"{iteration},{added_blocks},{added_centralities},{self.current_built_blocks},{self.current_centralities},{self.current_free_nature},{self.current_population}\n")
+                f"{iteration},{added_blocks},{added_centralities},"
+                f"{self.current_built_blocks},{self.current_centralities},"
+                f"{self.current_free_nature},{self.current_population},"
+                f"{self.avg_dist_from_nature},{self.avg_dist_from_centr}\n")
 
 
 def d(x1, y1, x2, y2):
