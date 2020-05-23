@@ -11,8 +11,6 @@ This project presents generative simulations of urban growth in the [isobenefit 
 
 You will need [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) and python installed, if don't have it on your machine already, the [anaconda distribution](https://docs.anaconda.com/anaconda/install/) is the easiest place to start.
 
-%% todo check if git included in anaconda installation 
-
 
 ### Install
 Open the terminal (On Windows search for `Anaconda Prompt`)
