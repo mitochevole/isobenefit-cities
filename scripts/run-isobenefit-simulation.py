@@ -113,9 +113,9 @@ if __name__ == "__main__":
     isolated_centrality_probability = args.isolated_centrality_probability
     max_population = args.max_population
     max_ab_km2 = args.max_ab_km2
-    urbanism_model=args.urbanism_model
+    urbanism_model = args.urbanism_model
     LOGGER.info(args)
-    run_isobenefit_simulation(size_x=size_x, size_y=size_y, n_steps=n_steps, output_path=output_path,
+    run_isobenefit_simulation(size_x=size_x, size_y=size_y, n_steps=n_steps, output_path_prefix=output_path,
                               build_probability=build_probability,
                               neighboring_centrality_probability=neighboring_centrality_probability,
                               isolated_centrality_probability=isolated_centrality_probability, T_star=T,
