@@ -49,7 +49,8 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path_prefix, build
                            build_probability=build_probability, T=T_star,
                            mode=initialization_mode,
                            filepath=input_filepath, max_population=max_population, max_ab_km2=max_ab_km2,
-                           urbanism_model=urbanism_model, prob_distribution=prob_distribution, density_factors=density_factors)
+                           urbanism_model=urbanism_model, prob_distribution=prob_distribution,
+                           density_factors=density_factors)
 
     canvas = np.ones(shape=(size_x, size_y, 4))
     update_map_snapshot(land, canvas)
@@ -73,7 +74,7 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path_prefix, build
         update_map_snapshot(land, canvas)
         snapshot_path = save_snapshot(canvas, output_path=output_path, step=i)
 
-    save_min_distances(land)
+    save_min_distances(land, output_path)
 
     LOGGER.info(f"Simulation ended. Total duration: {time.time() - t_zero} seconds")
 
@@ -157,12 +158,12 @@ def save_snapshot(canvas, output_path, step, format='png'):
 
 def save_min_distances(land: Land, output_path):
     records_list = []
-    for x in land.size_x:
-        for y in land.size_y:
+    for x in range(land.size_x):
+        for y in range(land.size_y):
             if land.map[x][y].is_built and not land.map[x][y].is_centrality:
                 min_nature_dist, min_centr_dist = land.get_min_distances(x, y)
-                records_list.append([x,y,min_nature_dist, min_centr_dist])
+                records_list.append([x, y, min_nature_dist, min_centr_dist])
     distances_mapping_filepath = os.path.join(output_path, "minimal_distances_map.csv")
     array_of_data = np.asarray(records_list)
-    header="X,Y,min_nature_dist, min_centr_dist"
-    np.savetxt(array_of_data,fname=distances_mapping_filepath,delimieter=',',newline='\n', header=header)
+    header = "X,Y,min_nature_dist, min_centr_dist"
+    np.savetxt(fname=distances_mapping_filepath, X=array_of_data, delimiter=',', newline='\n', header=header)
