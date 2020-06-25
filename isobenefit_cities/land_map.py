@@ -143,6 +143,8 @@ class Land:
         tot_distance_from_nature = 0
         tot_distance_from_centrality = 0
         tot_inhabited_blocks = 0
+        max_dist_from_nature = 0
+        max_dist_from_centr = 0
         for x in range(self.size_x):
             for y in range(self.size_y):
                 tot_population += self.map[x][y].inhabitants
@@ -152,6 +154,8 @@ class Land:
                 if self.map[x][y].is_built and not self.map[x][y].is_centrality:
                     tot_inhabited_blocks += 1
                     min_nature_dist, min_centr_dist = self.get_min_distances(x, y)
+                    max_dist_from_nature = max(min_nature_dist, max_dist_from_nature)
+                    max_dist_from_centr = max(min_centr_dist, max_dist_from_centr)
                     tot_distance_from_nature += min_nature_dist
                     tot_distance_from_centrality += min_centr_dist
         self.current_population = tot_population
@@ -161,9 +165,14 @@ class Land:
         if tot_inhabited_blocks == 0:
             self.avg_dist_from_nature = 0
             self.avg_dist_from_centr = 0
+            self.max_dist_from_nature = 0
+            self.max_dist_from_centr = 0
+
         else:
             self.avg_dist_from_nature = tot_distance_from_nature / tot_inhabited_blocks
             self.avg_dist_from_centr = tot_distance_from_centrality / tot_inhabited_blocks
+            self.max_dist_from_nature = max_dist_from_nature
+            self.max_dist_from_centr = max_dist_from_centr
 
     def get_min_distances(self, x, y):
         r = 1
@@ -207,7 +216,7 @@ class Land:
         with open(filename, "a") as f:
             f.write(
                 "iteration,added_blocks,added_centralities,current_built_blocks,current_centralities,"
-                "current_free_nature,current_population,avg_dist_from_nature,avg_dist_from_centr\n")
+                "current_free_nature,current_population,avg_dist_from_nature,avg_dist_from_centr,max_dist_from_nature,max_dist_from_centr\n")
 
     def record_current_counts(self, output_path, iteration, added_blocks, added_centralities):
         filename = os.path.join(output_path, 'current_counts.csv')
@@ -216,7 +225,8 @@ class Land:
                 f"{iteration},{added_blocks},{added_centralities},"
                 f"{self.current_built_blocks},{self.current_centralities},"
                 f"{self.current_free_nature},{self.current_population},"
-                f"{self.avg_dist_from_nature},{self.avg_dist_from_centr}\n")
+                f"{self.avg_dist_from_nature},{self.avg_dist_from_centr},"
+                f"{self.max_dist_from_nature},{self.max_dist_from_centr}\n")
 
 
 def d(x1, y1, x2, y2):
