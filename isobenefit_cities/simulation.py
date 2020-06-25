@@ -7,16 +7,21 @@ import numpy as np
 from isobenefit_cities import logger
 from isobenefit_cities.image_io import save_image_from_2Darray
 from isobenefit_cities.initialization_utils import get_central_coord
-from isobenefit_cities.land_map import MapBlock, IsobenefitScenario, ClassicalScenario
+from isobenefit_cities.land_map import MapBlock, IsobenefitScenario, ClassicalScenario, Land
 
 N_AMENITIES = 1
 
 
-def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, build_probability,
+def run_isobenefit_simulation(size_x, size_y, n_steps, output_path_prefix, build_probability,
                               neighboring_centrality_probability, isolated_centrality_probability, T_star,
                               random_seed,
                               input_filepath, initialization_mode, max_population, max_ab_km2, urbanism_model,
                               prob_distribution, density_factors):
+    logger.configure_logging()
+    LOGGER = logger.get_logger()
+    np.random.seed(random_seed)
+
+    output_path = make_output_path(output_path_prefix)
     metadata = {'size_x': size_x,
                 'size_y': size_y,
                 'n_steps': n_steps,
@@ -33,11 +38,6 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, build_probab
                 'urbanism_model': urbanism_model,
                 'prob_distribution': prob_distribution,
                 'density_factors': density_factors}
-    logger.configure_logging()
-    LOGGER = logger.get_logger()
-    np.random.seed(random_seed)
-
-    output_path = make_output_path(output_path)
     os.makedirs(output_path)
     save_metadata(metadata, output_path)
 
@@ -49,7 +49,8 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, build_probab
                            build_probability=build_probability, T=T_star,
                            mode=initialization_mode,
                            filepath=input_filepath, max_population=max_population, max_ab_km2=max_ab_km2,
-                           urbanism_model=urbanism_model, prob_distribution=prob_distribution, density_factors=density_factors)
+                           urbanism_model=urbanism_model, prob_distribution=prob_distribution,
+                           density_factors=density_factors)
 
     canvas = np.ones(shape=(size_x, size_y, 4))
     update_map_snapshot(land, canvas)
@@ -73,11 +74,13 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path, build_probab
         update_map_snapshot(land, canvas)
         snapshot_path = save_snapshot(canvas, output_path=output_path, step=i)
 
+    save_min_distances(land, output_path)
+
     LOGGER.info(f"Simulation ended. Total duration: {time.time() - t_zero} seconds")
 
 
-def make_output_path(output_path):
-    if output_path is None:
+def make_output_path(output_path_prefix):
+    if output_path_prefix is None:
         timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
         output_path = f"simulations/{timestamp}"
 
@@ -151,3 +154,16 @@ def save_snapshot(canvas, output_path, step, format='png'):
     final_path = os.path.join(output_path, f"{step:05d}.png")
     save_image_from_2Darray(canvas, filepath=final_path, format=format)
     return final_path
+
+
+def save_min_distances(land: Land, output_path):
+    records_list = []
+    for x in range(land.size_x):
+        for y in range(land.size_y):
+            if land.map[x][y].is_built and not land.map[x][y].is_centrality:
+                min_nature_dist, min_centr_dist = land.get_min_distances(x, y)
+                records_list.append([x, y, min_nature_dist, min_centr_dist])
+    distances_mapping_filepath = os.path.join(output_path, "minimal_distances_map.csv")
+    array_of_data = np.asarray(records_list)
+    header = "X,Y,min_nature_dist, min_centr_dist"
+    np.savetxt(fname=distances_mapping_filepath, X=array_of_data, delimiter=',', newline='\n', header=header)

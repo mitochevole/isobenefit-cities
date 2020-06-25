@@ -145,7 +145,7 @@ def simluation_wrapper(entries, arguments_types):
         else:
             input_args[entry_name] = _dtype(entry_widget.get())
 
-    input_args.update({'input_filepath': None, 'initialization_mode': 'list', 'output_path': None})
+    input_args.update({'input_filepath': None, 'initialization_mode': 'list', 'output_path_prefix': None})
     run_isobenefit_simulation(**input_args)
 
 
