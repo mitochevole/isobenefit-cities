@@ -1,0 +1,14 @@
+<html>
+  <head></head>
+  <body>
+    {% if username %}
+      Hello {{ username }}! Length of your username: {{ value }}
+    {% else %}
+      Hello guest!
+    {% endif %}
+    <form action="/" method="post">
+      Username: <input type="text" name="username">
+      <input type="submit" name="submit" value="Submit">
+    </form>
+  </body>
+</html>
