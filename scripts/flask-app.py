@@ -1,23 +1,24 @@
-import time
-from flask import Flask, request, render_template
+from time import sleep
+from flask import Flask, render_template
+from math import sqrt
 
 app = Flask(__name__)
 
-@app.route('/', methods=["GET", "POST"])
+@app.route('/')
 def index():
-    username = None
-    value = 0
-    if request.method == 'POST':
-        username = request.form.get("username", None)
+    # render the template (below) that will use JavaScript to read the stream
+    return render_template('index.html')
 
-    def calculate_value_based_on_username(user_given_name):
-        time.sleep(1)
-        return len(user_given_name)
+@app.route('/stream_sqrt')
+def stream():
+    def generate():
+        for i in range(500):
+            yield '{}\n'.format(sqrt(i))
+            sleep(0.01)
 
-    if username:
-        value = calculate_value_based_on_username(username)
-        return render_template('app.html', username=username, value=value)
-    return render_template('app.html')
+    return app.response_class(generate(), mimetype='text/plain')
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
