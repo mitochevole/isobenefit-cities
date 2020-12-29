@@ -45,6 +45,15 @@ class Land:
         self.probability_distribution = prob_distribution
         self.population_density = {'high': density_factors[0], 'medium': density_factors[1], 'low': density_factors[2], 'empty': 0}
 
+        self.avg_dist_from_nature = 0
+        self.avg_dist_from_centr = 0
+        self.max_dist_from_nature = 0
+        self.max_dist_from_centr = 0
+        self.current_population = 0
+        self.current_centralities = 0
+        self.current_built_blocks = 0
+        self.current_free_nature = np.inf
+
     def check_consistency(self):
         for x in range(self.size_x):
             for y in range(self.size_y):
@@ -143,8 +152,8 @@ class Land:
         tot_distance_from_nature = 0
         tot_distance_from_centrality = 0
         tot_inhabited_blocks = 0
-        max_dist_from_nature = 0
-        max_dist_from_centr = 0
+        max_dist_from_nature = self.max_dist_from_nature
+        max_dist_from_centr = self.max_dist_from_centr
         for x in range(self.size_x):
             for y in range(self.size_y):
                 tot_population += self.map[x][y].inhabitants
@@ -190,9 +199,9 @@ class Land:
                 for i in [x - r, x + r]:
                     i, j = self.adjust_boundary_coords(i, j)
                     if self.map[i][j].is_nature:
-                        nature_dist = d(x, y, i, j)
+                        nature_dist = min(nature_dist, d(x, y, i, j))
                     if self.map[i][j].is_centrality:
-                        centrality_dist = d(x, y, i, j)
+                        centrality_dist = min(centrality_dist, d(x, y, i, j))
             r += 1
         return nature_dist, centrality_dist
 
