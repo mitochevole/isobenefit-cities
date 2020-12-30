@@ -8,6 +8,7 @@ from isobenefit_cities import logger
 from isobenefit_cities.image_io import save_image_from_2Darray
 from isobenefit_cities.initialization_utils import get_central_coord
 from isobenefit_cities.land_map import MapBlock, IsobenefitScenario, ClassicalScenario, Land
+from pathlib import Path
 
 N_AMENITIES = 1
 
@@ -38,7 +39,8 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path_prefix, build
                 'urbanism_model': urbanism_model,
                 'prob_distribution': prob_distribution,
                 'density_factors': density_factors}
-    os.makedirs(output_path)
+
+    Path(output_path).mkdir(parents=True, exist_ok=True)
     save_metadata(metadata, output_path)
 
     t_zero = time.time()
@@ -83,6 +85,8 @@ def make_output_path(output_path_prefix):
     if output_path_prefix is None:
         timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
         output_path = f"simulations/{timestamp}"
+    else:
+        output_path = f"simulations/{output_path_prefix}"
 
     return output_path
 

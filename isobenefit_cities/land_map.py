@@ -187,7 +187,7 @@ class Land:
         r = 1
         nature_dist = np.inf
         centrality_dist = np.inf
-        while (nature_dist == np.inf or centrality_dist == np.inf):
+        while (nature_dist > self.T_star or centrality_dist > self.T_star):
             for i in range(x - r, x + r + 1):
                 for j in [y - r, y + r]:
                     i, j = self.adjust_boundary_coords(i, j)
