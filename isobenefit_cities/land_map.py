@@ -154,6 +154,7 @@ class Land:
         tot_inhabited_blocks = 0
         max_dist_from_nature = self.max_dist_from_nature
         max_dist_from_centr = self.max_dist_from_centr
+        # TODO vectorize this
         for x in range(self.size_x):
             for y in range(self.size_y):
                 tot_population += self.map[x][y].inhabitants
@@ -187,7 +188,7 @@ class Land:
         r = 1
         nature_dist = np.inf
         centrality_dist = np.inf
-        while ((nature_dist > self.T_star or centrality_dist > self.T_star) and r <= self.T_star):
+        while ( r <= self.T_star):
             for i in range(x - r, x + r + 1):
                 for j in [y - r, y + r]:
                     i, j = self.adjust_boundary_coords(i, j)
