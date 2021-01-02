@@ -64,11 +64,14 @@ class Land:
                         block.is_built and not block.is_nature), f"({x},{y}) block has ambiguous coordinates"
 
     def get_map_as_array(self):
-        A = np.ones(shape=(self.size_x, self.size_y))
+        A = np.zeros(shape=(self.size_x, self.size_y))
         for x in range(self.size_x):
             for y in range(self.size_y):
                 if self.map[x][y].is_built:
-                    A[x, y] = 0
+                    A[x, y] = 1
+                if self.map[x][y].is_centrality:
+                    A[x, y] = 2
+
         return A
 
     def set_centralities(self, centralities: list):
@@ -99,26 +102,27 @@ class Land:
     def nature_stays_extended(self, x, y):
         # this method assumes that x,y belongs to a natural region
         land_array = self.get_map_as_array()
-        land_array[x, y] = 0
-        labels, num_features = measure.label(land_array)
+        land_array[x, y] = 1
+        bin_array = np.where(land_array == 0, 1, 0)
+        labels, num_features = measure.label(bin_array)
         is_nature_extended = False
         if num_features == 1:
             is_nature_extended = True
 
         is_wide_enough_height = np.apply_along_axis(partial(is_nature_wide_along_axis, T_star=self.T_star), axis=1,
-                                                    arr=land_array)
+                                                    arr=bin_array)
         is_wide_enough_width = np.apply_along_axis(partial(is_nature_wide_along_axis, T_star=self.T_star), axis=0,
-                                                   arr=land_array)
+                                                   arr=bin_array)
         narrow_places_h = len(is_wide_enough_height) - is_wide_enough_height.sum()
         narrow_places_w = len(is_wide_enough_width) - is_wide_enough_width.sum()
 
         return narrow_places_h == 0 and narrow_places_w == 0 and is_nature_extended
 
-    def is_nature_reachable(self, x, y):
+    def nature_stays_reachable(self, x, y):
         land_array = self.get_map_as_array()
-        land_array[x, y] = 0
-        x_built, y_built = np.where(land_array == 0)
-        x_nature, y_nature = np.where(land_array == 1)
+        land_array[x, y] = 1
+        x_built, y_built = np.where(land_array > 0)
+        x_nature, y_nature = np.where(land_array == 0)
         return np.sqrt((x_built[:, None] - x_nature) ** 2 + (y_built[:, None] - y_nature) ** 2).min(
             axis=1).max() <= self.T_star
 
@@ -259,7 +263,7 @@ class IsobenefitScenario(Land):
                         if copy_land.is_centrality_near(x, y):
                             if self.nature_stays_extended(x, y):
                                 if np.random.rand() < self.build_probability:
-                                    if self.is_nature_reachable(x, y):
+                                    if self.nature_stays_reachable(x, y):
                                         density_level = np.random.choice(DENSITY_LEVELS,
                                                                          p=self.probability_distribution)
                                         block.is_nature = False
@@ -270,7 +274,7 @@ class IsobenefitScenario(Land):
                         else:
                             if np.random.rand() < self.neighboring_centrality_probability:
                                 if self.nature_stays_extended(x, y):
-                                    if self.is_nature_reachable(x, y):
+                                    if self.nature_stays_reachable(x, y):
                                         block.is_centrality = True
                                         block.is_built = True
                                         block.is_nature = False
@@ -280,7 +284,7 @@ class IsobenefitScenario(Land):
                     else:
                         if np.random.rand() < self.isolated_centrality_probability / (self.size_x * self.size_y):
                             if self.nature_stays_extended(x, y):
-                                if self.is_nature_reachable(x, y):
+                                if self.nature_stays_reachable(x, y):
                                     block.is_centrality = True
                                     block.is_built = True
                                     block.is_nature = False

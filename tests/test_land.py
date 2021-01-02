@@ -1,6 +1,4 @@
-from functools import partial
 from unittest import TestCase
-from scipy.ndimage import measurements as measure
 import numpy as np
 
 from isobenefit_cities.land_map import Land, MapBlock, is_nature_wide_along_axis
@@ -19,9 +17,10 @@ class TestLand(TestCase):
 
     @staticmethod
     def get_expected_array():
-        A = np.ones(shape=(20, 10))
-        A[4:9, 4:9] = 0
-        A[12:17, 4:9] = 0
+        A = np.zeros(shape=(20, 10))
+        A[4:9, 4:9] = 1
+        A[12:17, 4:9] = 1
+        A[[6, 14], [6, 6]] = 2
         return A
 
     def test_check_consistency(self):
@@ -34,8 +33,9 @@ class TestLand(TestCase):
     def test_get_map_as_array(self):
         land = self.get_land()
         land_array = land.get_map_as_array()
-        expected_land_array = np.ones(shape=(20, 15))
-        expected_land_array[3:8, 3:8] = 0
+        expected_land_array = np.zeros(shape=(20, 15))
+        expected_land_array[3:8, 3:8] = 1
+        expected_land_array[5, 5] = 2
         np.testing.assert_array_equal(land_array, expected_land_array)
 
     def test_set_centralities(self):
@@ -57,33 +57,41 @@ class TestLand(TestCase):
 
     def test_is_centrality_near(self):
         land = self.get_land()
-        self.assertTrue(land.is_centrality_near(6,7))
+        self.assertTrue(land.is_centrality_near(6, 7))
         self.assertFalse(land.is_centrality_near(14, 7))
-        self.assertRaises(AssertionError,land.is_centrality_near,x=4, y=4)
+        self.assertRaises(AssertionError, land.is_centrality_near, x=4, y=4)
 
     def test_is_nature_wide_along_axis(self):
-        land_array_1d = np.array([1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1])
+        land_array_1d = np.array([1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1])
 
         self.assertTrue(is_nature_wide_along_axis(land_array_1d, T_star=5))
         self.assertFalse(is_nature_wide_along_axis(land_array_1d, T_star=7))
 
     def test_nature_stays_extended(self):
-        land = Land(20,20)
-        for x in [5,14]:
-            for y in [5,14]:
+        land = Land(20, 20)
+        for x in [5, 14]:
+            for y in [5, 14]:
                 land.map[x][y].is_built = True
                 land.map[x][y].is_nature = False
 
-        self.assertTrue(land.nature_stays_extended(6,14))
+        self.assertTrue(land.nature_stays_extended(6, 14))
         self.assertFalse(land.nature_stays_extended(5, 10))
 
-        for x in range(5,14):
+        for x in range(5, 14):
             land.map[x][5].is_built = True
             land.map[x][5].is_nature = False
 
         self.assertTrue(land.nature_stays_extended(14, 6))
         self.assertFalse(land.nature_stays_extended(5, 10))
 
+    def test_is_nature_reachable(self):
+        land = self.get_land()
+        self.assertTrue(land.nature_stays_reachable(9, 8))
+        for i in range(3, 14):
+            for j in range(3, 14):
+                land.map[i][j].is_built = True
+                land.map[i][j].is_nature = False
+        self.assertFalse(land.nature_stays_reachable(15, 14))
 
     def test_initialize_map_from_image(self):
         land = Land(20, 10)
