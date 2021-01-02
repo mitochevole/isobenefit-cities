@@ -3,7 +3,7 @@ import os
 from functools import partial
 
 import numpy as np
-from scipy.ndimage.measurements import label
+from scipy.ndimage import measurements as measure
 
 from isobenefit_cities import logger
 from isobenefit_cities.image_io import import_2Darray_from_image
@@ -96,11 +96,11 @@ class Land:
                         return True
         return False
 
-    def is_nature_extended(self, x, y):
+    def nature_stays_extended(self, x, y):
         # this method assumes that x,y belongs to a natural region
         land_array = self.get_map_as_array()
         land_array[x, y] = 0
-        labels, num_features = label(land_array)
+        labels, num_features = measure.label(land_array)
         is_nature_extended = False
         if num_features == 1:
             is_nature_extended = True
@@ -236,7 +236,7 @@ def d(x1, y1, x2, y2):
 
 
 def is_nature_wide_along_axis(array_1d, T_star):
-    features, labels = label(array_1d)
+    features, labels = measure.label(array_1d)
     unique, counts = np.unique(features, return_counts=True)
     if len(counts) > 1:
         return counts[1:].min() >= T_star
@@ -257,7 +257,7 @@ class IsobenefitScenario(Land):
                 if block.is_nature:
                     if copy_land.is_any_neighbor_built(x, y):
                         if copy_land.is_centrality_near(x, y):
-                            if self.is_nature_extended(x, y):
+                            if self.nature_stays_extended(x, y):
                                 if np.random.rand() < self.build_probability:
                                     if self.is_nature_reachable(x, y):
                                         density_level = np.random.choice(DENSITY_LEVELS,
@@ -269,7 +269,7 @@ class IsobenefitScenario(Land):
                                         added_blocks += 1
                         else:
                             if np.random.rand() < self.neighboring_centrality_probability:
-                                if self.is_nature_extended(x, y):
+                                if self.nature_stays_extended(x, y):
                                     if self.is_nature_reachable(x, y):
                                         block.is_centrality = True
                                         block.is_built = True
@@ -279,7 +279,7 @@ class IsobenefitScenario(Land):
 
                     else:
                         if np.random.rand() < self.isolated_centrality_probability / (self.size_x * self.size_y):
-                            if self.is_nature_extended(x, y):
+                            if self.nature_stays_extended(x, y):
                                 if self.is_nature_reachable(x, y):
                                     block.is_centrality = True
                                     block.is_built = True
