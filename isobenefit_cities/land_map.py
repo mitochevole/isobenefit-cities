@@ -14,7 +14,7 @@ DENSITY_LEVELS = ['high', 'medium', 'low']
 
 
 class MapBlock:
-    def __init__(self, x, y, inhabitants):
+    def __init__(self, x, y, inhabitants=0):
         self.x = x
         self.y = y
         self.is_nature = True
@@ -29,7 +29,7 @@ class MapBlock:
 
 class Land:
     def __init__(self, size_x, size_y, build_probability=0.5, neighboring_centrality_probability=5e-3,
-                 isolated_centrality_probability=1e-1, T_star=10,
+                 isolated_centrality_probability=1e-1, T_star=5,
                  max_population=500000, max_ab_km2=10000, prob_distribution=(0.7, 0.3, 0), density_factors=(1, 0.1, 0.01)):
         self.size_x = size_x
         self.size_y = size_y
@@ -75,17 +75,16 @@ class Land:
             self.map[x][y].is_centrality = True
             self.map[x][y].is_built = True
             self.map[x][y].is_nature = False
+            self.map[x][y].inhabitants = 0
 
     def get_neighborhood(self, x, y):
+        assert self.T_star <= x <= self.size_x -self.T_star, f"point ({x},{y}) is not in the 'interior' of the land"
+        assert self.T_star <= y <= self.size_y -self.T_star, f"point ({x},{y}) is not in the 'interior' of the land"
 
         neighborhood = Land(size_x=2 * self.T_star + 1, size_y=2 * self.T_star + 1, T_star=self.T_star)
         for i in range(x - self.T_star, x + self.T_star + 1):
             for j in range(y - self.T_star, y + self.T_star + 1):
-                try:
-                    neighborhood.map[i + self.T_star - x][j + self.T_star - y] = self.map[i][j]
-                except Exception as e:
-                    print("i: {}, j: {}, x: {}, y: {}, T: {}".format(i, j, x, y, self.T_star))
-                    raise e
+                neighborhood.map[i + self.T_star - x][j + self.T_star - y] = self.map[i][j]
         return neighborhood
 
     def is_any_neighbor_built(self, x, y):
