@@ -64,15 +64,17 @@ class Land:
                         block.is_built and not block.is_nature), f"({x},{y}) block has ambiguous coordinates"
 
     def get_map_as_array(self):
-        A = np.zeros(shape=(self.size_x, self.size_y))
+        map_array = np.zeros(shape=(self.size_x, self.size_y))
+        population_array = np.ones(shape=(self.size_x, self.size_y))
         for x in range(self.size_x):
             for y in range(self.size_y):
                 if self.map[x][y].is_built:
-                    A[x, y] = 1
+                    map_array[x, y] = 1
                 if self.map[x][y].is_centrality:
-                    A[x, y] = 2
+                    map_array[x, y] = 2
+                population_array[x, y] = self.map[x][y].inhabitants
 
-        return A
+        return map_array, population_array
 
     def set_centralities(self, centralities: list):
         for centrality in centralities:
@@ -95,13 +97,13 @@ class Land:
         for i in range(x - self.T_star, x + self.T_star + 1):
             for j in range(y - self.T_star, y + self.T_star + 1):
                 if self.map[i][j].is_centrality:
-                    if d(x, y, self.T_star, self.T_star) <= self.T_star:
+                    if d(x, y, i, j) <= self.T_star:
                         return True
         return False
 
     def nature_stays_extended(self, x, y):
         # this method assumes that x,y belongs to a natural region
-        land_array = self.get_map_as_array()
+        land_array, _ = self.get_map_as_array()
         land_array[x, y] = 1
         bin_array = np.where(land_array == 0, 1, 0)
         labels, num_features = measure.label(bin_array)
@@ -119,7 +121,7 @@ class Land:
         return narrow_places_h == 0 and narrow_places_w == 0 and is_nature_extended
 
     def nature_stays_reachable(self, x, y):
-        land_array = self.get_map_as_array()
+        land_array, _ = self.get_map_as_array()
         land_array[x, y] = 1
         x_built, y_built = np.where(land_array > 0)
         x_nature, y_nature = np.where(land_array == 0)
@@ -141,33 +143,17 @@ class Land:
                     self.map[x][y].is_nature = False
 
     def set_current_counts(self):
-        tot_population = 0
-        tot_centralities = 0
-        tot_built = 0
-        tot_nature = 0
         tot_distance_from_nature = 0
         tot_distance_from_centrality = 0
-        tot_inhabited_blocks = 0
         max_dist_from_nature = self.max_dist_from_nature
         max_dist_from_centr = self.max_dist_from_centr
-        # TODO vectorize this
-        for x in range(self.size_x):
-            for y in range(self.size_y):
-                tot_population += self.map[x][y].inhabitants
-                tot_centralities += int(self.map[x][y].is_centrality)
-                tot_built += int(self.map[x][y].is_built)
-                tot_nature += int(self.map[x][y].is_nature)
-                if self.map[x][y].is_built and not self.map[x][y].is_centrality:
-                    tot_inhabited_blocks += 1
-                    min_nature_dist, min_centr_dist = self.get_min_distances(x, y)
-                    max_dist_from_nature = max(min_nature_dist, max_dist_from_nature)
-                    max_dist_from_centr = max(min_centr_dist, max_dist_from_centr)
-                    tot_distance_from_nature += min_nature_dist
-                    tot_distance_from_centrality += min_centr_dist
-        self.current_population = tot_population
-        self.current_centralities = tot_centralities
-        self.current_built_blocks = tot_built
-        self.current_free_nature = tot_nature
+        land_array, population_array = self.get_map_as_array()
+
+        self.current_population = population_array.sum()
+        self.current_centralities = np.where(land_array == 2, 1, 0).sum()
+        self.current_built_blocks = np.where(land_array > 0, 1, 0).sum()
+        self.current_free_nature = np.where(land_array == 0, 1, 0).sum()
+        tot_inhabited_blocks = np.where(land_array == 1, 1, 0).sum()
         if tot_inhabited_blocks == 0:
             self.avg_dist_from_nature = 0
             self.avg_dist_from_centr = 0
@@ -175,10 +161,18 @@ class Land:
             self.max_dist_from_centr = 0
 
         else:
-            self.avg_dist_from_nature = tot_distance_from_nature / tot_inhabited_blocks
-            self.avg_dist_from_centr = tot_distance_from_centrality / tot_inhabited_blocks
-            self.max_dist_from_nature = max_dist_from_nature
-            self.max_dist_from_centr = max_dist_from_centr
+            x_centr, y_centr = np.where(land_array == 2)
+            x_built, y_built = np.where(land_array == 1)
+            x_nature, y_nature = np.where(land_array == 0)
+            distances_from_nature = np.sqrt(
+                (x_built[:, None] - x_nature) ** 2 + (y_built[:, None] - y_nature) ** 2).min(
+                axis=1)
+            distances_from_centr = np.sqrt((x_built[:, None] - x_centr) ** 2 + (y_built[:, None] - y_centr) ** 2).min(
+                axis=1)
+            self.avg_dist_from_nature = distances_from_nature.sum() / tot_inhabited_blocks
+            self.avg_dist_from_centr = distances_from_centr.sum() / tot_inhabited_blocks
+            self.max_dist_from_nature = distances_from_nature.max()
+            self.max_dist_from_centr = distances_from_centr.max()
 
     def get_min_distances(self, x, y):
         r = 1
