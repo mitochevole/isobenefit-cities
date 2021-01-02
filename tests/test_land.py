@@ -48,32 +48,17 @@ class TestLand(TestCase):
         self.assertTrue(land.map[5][5].is_centrality)
         self.assertFalse(land.map[5][5].is_nature)
 
-    def test_get_neighborhood(self):
+    def test_is_any_neighbor_built(self):
         land = self.get_land()
-        x0 = 5
-        y0 = 5
-        neighborhood = land.get_neighborhood(x0, y0)
-        self.assertEqual(land.T_star * 2 + 1, neighborhood.size_x)
-        self.assertEqual(land.T_star * 2 + 1, neighborhood.size_y)
-        for i in range(2*land.T_star+1):
-            for j in range(2*land.T_star+1):
-                x = i-land.T_star+x0
-                y = j - land.T_star + y0
-                self.assertTrue(land.map[x][y], neighborhood.map[i][j])
+        self.assertTrue(land.is_any_neighbor_built(6, 6))
+        self.assertFalse(land.is_any_neighbor_built(9, 9))
+        self.assertRaises(AssertionError, land.is_any_neighbor_built, x=3, y=3)
 
-        x0 = 10
-        y0 = 5
-        neighborhood = land.get_neighborhood(x0, y0)
-        self.assertEqual(land.T_star * 2 + 1, neighborhood.size_x)
-        self.assertEqual(land.T_star * 2 + 1, neighborhood.size_y)
-        for i in range(2 * land.T_star + 1):
-            for j in range(2 * land.T_star + 1):
-                x = i - land.T_star + x0
-                y = j - land.T_star + y0
-                self.assertTrue(land.map[x][y], neighborhood.map[i][j])
-
-        land2 = Land(10,5, T_star=5)
-        self.assertRaises(AssertionError, land2.get_neighborhood,x=2,y=2)
+    def test_is_centrality_near(self):
+        land = self.get_land()
+        self.assertTrue(land.is_centrality_near(6,7))
+        self.assertFalse(land.is_centrality_near(14, 7))
+        self.assertRaises(AssertionError,land.is_centrality_near,x=4, y=4)
 
     def test_initialize_map_from_image(self):
         land = Land(20, 10)

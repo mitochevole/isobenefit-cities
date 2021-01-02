@@ -30,7 +30,8 @@ class MapBlock:
 class Land:
     def __init__(self, size_x, size_y, build_probability=0.5, neighboring_centrality_probability=5e-3,
                  isolated_centrality_probability=1e-1, T_star=5,
-                 max_population=500000, max_ab_km2=10000, prob_distribution=(0.7, 0.3, 0), density_factors=(1, 0.1, 0.01)):
+                 max_population=500000, max_ab_km2=10000, prob_distribution=(0.7, 0.3, 0),
+                 density_factors=(1, 0.1, 0.01)):
         self.size_x = size_x
         self.size_y = size_y
         self.T_star = T_star
@@ -43,7 +44,8 @@ class Land:
         # that equals to a 15 minutes walk, i.e. roughly 1 km. 1 block has size 1000/T_star metres
         self.block_pop = max_ab_km2 / (T_star ** 2)
         self.probability_distribution = prob_distribution
-        self.population_density = {'high': density_factors[0], 'medium': density_factors[1], 'low': density_factors[2], 'empty': 0}
+        self.population_density = {'high': density_factors[0], 'medium': density_factors[1], 'low': density_factors[2],
+                                   'empty': 0}
 
         self.avg_dist_from_nature = 0
         self.avg_dist_from_centr = 0
@@ -77,30 +79,21 @@ class Land:
             self.map[x][y].is_nature = False
             self.map[x][y].inhabitants = 0
 
-    def get_neighborhood(self, x, y):
-        assert self.T_star <= x <= self.size_x -self.T_star, f"point ({x},{y}) is not in the 'interior' of the land"
-        assert self.T_star <= y <= self.size_y -self.T_star, f"point ({x},{y}) is not in the 'interior' of the land"
-
-        neighborhood = Land(size_x=2 * self.T_star + 1, size_y=2 * self.T_star + 1, T_star=self.T_star)
-        for i in range(x - self.T_star, x + self.T_star + 1):
-            for j in range(y - self.T_star, y + self.T_star + 1):
-                neighborhood.map[i + self.T_star - x][j + self.T_star - y] = self.map[i][j]
-        return neighborhood
-
     def is_any_neighbor_built(self, x, y):
+        assert self.T_star <= x <= self.size_x - self.T_star, f"point ({x},{y}) is not in the 'interior' of the land"
+        assert self.T_star <= y <= self.size_y - self.T_star, f"point ({x},{y}) is not in the 'interior' of the land"
         return (self.map[x - 1][y].is_built or self.map[x + 1][y].is_built or self.map[x][y - 1].is_built or
                 self.map[x][y + 1].is_built)
 
-    def has_centrality_nearby(self):
-        for x in range(self.size_x):
-            for y in range(self.size_y):
-                try:
-                    if self.map[x][y].is_centrality:
-                        if d(x, y, self.T_star, self.T_star) <= self.T_star:
-                            return True
-                except Exception as e:
-                    print("invalid position: x={}, y={}".format(x, y))
-                    raise e
+    def is_centrality_near(self, x, y):
+        assert self.T_star <= x <= self.size_x - self.T_star, f"point ({x},{y}) is not in the 'interior' of the land"
+        assert self.T_star <= y <= self.size_y - self.T_star, f"point ({x},{y}) is not in the 'interior' of the land"
+
+        for i in range(x - self.T_star, x + self.T_star + 1):
+            for j in range(y - self.T_star, y + self.T_star + 1):
+                if self.map[i][j].is_centrality:
+                    if d(x, y, self.T_star, self.T_star) <= self.T_star:
+                        return True
         return False
 
     def is_nature_extended(self, x, y):
@@ -187,7 +180,7 @@ class Land:
         r = 1
         nature_dist = np.inf
         centrality_dist = np.inf
-        while ( r <= self.T_star):
+        while (r <= self.T_star):
             for i in range(x - r, x + r + 1):
                 for j in [y - r, y + r]:
                     i, j = self.adjust_boundary_coords(i, j)
@@ -262,16 +255,17 @@ class IsobenefitScenario(Land):
                 assert (block.is_nature and not block.is_built) or (
                         block.is_built and not block.is_nature), f"({x},{y}) block has ambiguous coordinates"
                 if block.is_nature:
-                    neighborhood = copy_land.get_neighborhood(x, y)
-                    if neighborhood.is_any_neighbor_built(self.T_star, self.T_star):
-                        if neighborhood.has_centrality_nearby():
+                    if copy_land.is_any_neighbor_built(x, y):
+                        if copy_land.is_centrality_near(x, y):
                             if self.is_nature_extended(x, y):
                                 if np.random.rand() < self.build_probability:
                                     if self.is_nature_reachable(x, y):
-                                        density_level = np.random.choice(DENSITY_LEVELS, p=self.probability_distribution)
+                                        density_level = np.random.choice(DENSITY_LEVELS,
+                                                                         p=self.probability_distribution)
                                         block.is_nature = False
                                         block.is_built = True
-                                        block.set_block_population(self.block_pop, density_level, self.population_density)
+                                        block.set_block_population(self.block_pop, density_level,
+                                                                   self.population_density)
                                         added_blocks += 1
                         else:
                             if np.random.rand() < self.neighboring_centrality_probability:
@@ -313,8 +307,7 @@ class ClassicalScenario(Land):
                 assert (block.is_nature and not block.is_built) or (
                         block.is_built and not block.is_nature), f"({x},{y}) block has ambiguous coordinates"
                 if block.is_nature:
-                    neighborhood = copy_land.get_neighborhood(x, y)
-                    if neighborhood.is_any_neighbor_built(self.T_star, self.T_star):
+                    if copy_land.is_any_neighbor_built(x, y):
                         if np.random.rand() < self.build_probability:
                             density_level = np.random.choice(DENSITY_LEVELS, p=self.probability_distribution)
                             block.is_nature = False
