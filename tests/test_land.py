@@ -95,16 +95,32 @@ class TestLand(TestCase):
                 land.map[i][j].is_nature = False
         self.assertFalse(land.nature_stays_reachable(15, 14))
 
-    def test_set_current_counts(self):
+    def test_set_current_counts_isobenefit(self):
         land = Land(size_x=30, size_y=30)
         for i in range(10, 20):
             for j in range(10, 20):
                 land.map[i][j].is_built = True
                 land.map[i][j].is_nature = False
         land.map[15][15].is_centrality = True
-        land.set_current_counts()
+        land.set_current_counts(urbanism_model='isobenefit')
         self.assertEqual((2 * 99 + 17) / 99, land.avg_dist_from_nature)
         self.assertAlmostEqual(3.891977374432388, land.avg_dist_from_centr, places=7)
+        self.assertEqual(5, land.max_dist_from_nature)
+        self.assertEqual((50) ** 0.5, land.max_dist_from_centr)
+
+    def test_set_current_counts_classical(self):
+        land = Land(size_x=30, size_y=30)
+        for i in range(10, 21):
+            for j in [10,15,20]:
+                land.map[i][j].is_built = True
+                land.map[i][j].is_nature = False
+                land.map[j][i].is_built = True
+                land.map[j][i].is_nature = False
+
+        land.map[15][15].is_centrality = True
+        land.set_current_counts(urbanism_model='classical')
+        self.assertAlmostEqual(1.7142857142857142, land.avg_dist_from_nature, places=7)
+        self.assertAlmostEqual(4.821970622705455, land.avg_dist_from_centr, places=7)
         self.assertEqual(5, land.max_dist_from_nature)
         self.assertEqual((50) ** 0.5, land.max_dist_from_centr)
 

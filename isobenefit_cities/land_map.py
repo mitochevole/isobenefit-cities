@@ -105,16 +105,16 @@ class Land:
         # this method assumes that x,y belongs to a natural region
         land_array, _ = self.get_map_as_array()
         land_array[x, y] = 1
-        bin_array = np.where(land_array == 0, 1, 0)
-        labels, num_features = measure.label(bin_array)
+        nature_array = np.where(land_array == 0, 1, 0)
+        labels, num_features = measure.label(nature_array)
         is_nature_extended = False
         if num_features == 1:
             is_nature_extended = True
 
         is_wide_enough_height = np.apply_along_axis(partial(is_nature_wide_along_axis, T_star=self.T_star), axis=1,
-                                                    arr=bin_array)
+                                                    arr=nature_array)
         is_wide_enough_width = np.apply_along_axis(partial(is_nature_wide_along_axis, T_star=self.T_star), axis=0,
-                                                   arr=bin_array)
+                                                   arr=nature_array)
         narrow_places_h = len(is_wide_enough_height) - is_wide_enough_height.sum()
         narrow_places_w = len(is_wide_enough_width) - is_wide_enough_width.sum()
 
@@ -142,7 +142,7 @@ class Land:
                     self.map[x][y].is_centrality = False
                     self.map[x][y].is_nature = False
 
-    def set_current_counts(self):
+    def set_current_counts(self, urbanism_model):
         land_array, population_array = self.get_map_as_array()
         self.current_population = population_array.sum()
         self.current_centralities = np.where(land_array == 2, 1, 0).sum()
@@ -158,16 +158,28 @@ class Land:
         else:
             x_centr, y_centr = np.where(land_array == 2)
             x_built, y_built = np.where(land_array == 1)
-            x_nature, y_nature = np.where(land_array == 0)
+            distances_from_centr = np.sqrt(
+                (x_built[:, None] - x_centr) ** 2 + (y_built[:, None] - y_centr) ** 2).min(
+                axis=1)
+            self.avg_dist_from_centr = distances_from_centr.sum() / tot_inhabited_blocks
+            self.max_dist_from_centr = distances_from_centr.max()
+
+            if urbanism_model == 'isobenefit':
+                x_nature, y_nature = np.where(land_array == 0)
+
+            elif urbanism_model == 'classical':
+                nature_array = np.where(land_array == 0, 1, 0)
+                features, labels = measure.label(nature_array)
+                unique, counts = np.unique(features, return_counts=True)
+                large_natural_regions = counts[1:] >= self.T_star ** 2
+                large_natural_regions_labels = unique[1:][large_natural_regions]
+                x_nature, y_nature = np.where(np.isin(features, large_natural_regions_labels))
+
             distances_from_nature = np.sqrt(
                 (x_built[:, None] - x_nature) ** 2 + (y_built[:, None] - y_nature) ** 2).min(
                 axis=1)
-            distances_from_centr = np.sqrt((x_built[:, None] - x_centr) ** 2 + (y_built[:, None] - y_centr) ** 2).min(
-                axis=1)
             self.avg_dist_from_nature = distances_from_nature.sum() / tot_inhabited_blocks
-            self.avg_dist_from_centr = distances_from_centr.sum() / tot_inhabited_blocks
             self.max_dist_from_nature = distances_from_nature.max()
-            self.max_dist_from_centr = distances_from_centr.max()
 
     def get_min_distances(self, x, y):
         r = 1
@@ -308,7 +320,6 @@ class ClassicalScenario(Land):
                             block.set_block_population(self.block_pop, density_level, self.population_density)
                             added_blocks += 1
 
-                    # todo fix generation of new centralities away from main centre
                     else:
                         if np.random.rand() < self.isolated_centrality_probability / np.sqrt(
                                 self.size_x * self.size_y) and (
