@@ -143,23 +143,18 @@ class Land:
                     self.map[x][y].is_nature = False
 
     def set_current_counts(self):
-        tot_distance_from_nature = 0
-        tot_distance_from_centrality = 0
-        max_dist_from_nature = self.max_dist_from_nature
-        max_dist_from_centr = self.max_dist_from_centr
         land_array, population_array = self.get_map_as_array()
-
         self.current_population = population_array.sum()
         self.current_centralities = np.where(land_array == 2, 1, 0).sum()
         self.current_built_blocks = np.where(land_array > 0, 1, 0).sum()
         self.current_free_nature = np.where(land_array == 0, 1, 0).sum()
         tot_inhabited_blocks = np.where(land_array == 1, 1, 0).sum()
+
         if tot_inhabited_blocks == 0:
             self.avg_dist_from_nature = 0
             self.avg_dist_from_centr = 0
             self.max_dist_from_nature = 0
             self.max_dist_from_centr = 0
-
         else:
             x_centr, y_centr = np.where(land_array == 2)
             x_built, y_built = np.where(land_array == 1)
