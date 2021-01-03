@@ -58,7 +58,7 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path_prefix, build
     update_map_snapshot(land, canvas)
     snapshot_path = save_snapshot(canvas, output_path=output_path, step=0)
     land.set_record_counts_header(output_path=output_path)
-    land.set_current_counts()
+    land.set_current_counts(urbanism_model)
     i = 0
     added_blocks, added_centralities = (0, 0)
     land.record_current_counts(output_path=output_path, iteration=i, added_blocks=added_blocks,
@@ -67,7 +67,7 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path_prefix, build
     while i <= n_steps and land.current_population <= land.max_population:
         start = time.time()
         added_blocks, added_centralities = land.update_map()
-        land.set_current_counts()
+        land.set_current_counts(urbanism_model)
         i += 1
         land.record_current_counts(output_path=output_path, iteration=i, added_blocks=added_blocks,
                                    added_centralities=added_centralities)
