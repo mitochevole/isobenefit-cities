@@ -56,13 +56,13 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path_prefix, build
 
     canvas = np.ones(shape=(size_x, size_y, 4))
     update_map_snapshot(land, canvas)
-    snapshot_path = save_snapshot(canvas, output_path=output_path, step=0)
-    land.set_record_counts_header(output_path=output_path)
+    save_snapshot(canvas, output_path=output_path, step=0)
+    land.set_record_counts_header(output_path=output_path, urbanism_model=urbanism_model)
     land.set_current_counts(urbanism_model)
     i = 0
     added_blocks, added_centralities = (0, 0)
     land.record_current_counts(output_path=output_path, iteration=i, added_blocks=added_blocks,
-                               added_centralities=added_centralities)
+                               added_centralities=added_centralities, urbanism_model=urbanism_model)
 
     while i <= n_steps and land.current_population <= land.max_population:
         start = time.time()
@@ -70,11 +70,11 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path_prefix, build
         land.set_current_counts(urbanism_model)
         i += 1
         land.record_current_counts(output_path=output_path, iteration=i, added_blocks=added_blocks,
-                                   added_centralities=added_centralities)
+                                   added_centralities=added_centralities, urbanism_model=urbanism_model)
         LOGGER.info(f"step: {i}, duration: {time.time() - start} seconds")
         LOGGER.info(f"step: {i}, current population: {land.current_population} inhabitants")
         update_map_snapshot(land, canvas)
-        snapshot_path = save_snapshot(canvas, output_path=output_path, step=i)
+        save_snapshot(canvas, output_path=output_path, step=i)
 
     save_min_distances(land, output_path)
 

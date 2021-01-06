@@ -55,6 +55,8 @@ class Land:
         self.current_centralities = 0
         self.current_built_blocks = 0
         self.current_free_nature = np.inf
+        self.avg_dist_from_nature_wide = 0
+        self.max_dist_from_nature_wide = 0
 
     def check_consistency(self):
         for x in range(self.size_x):
@@ -164,16 +166,20 @@ class Land:
             self.avg_dist_from_centr = distances_from_centr.sum() / tot_inhabited_blocks
             self.max_dist_from_centr = distances_from_centr.max()
 
-            if urbanism_model == 'isobenefit':
-                x_nature, y_nature = np.where(land_array == 0)
+            x_nature, y_nature = np.where(land_array == 0)
 
-            elif urbanism_model == 'classical':
+            if urbanism_model == 'classical':
                 nature_array = np.where(land_array == 0, 1, 0)
                 features, labels = measure.label(nature_array)
                 unique, counts = np.unique(features, return_counts=True)
                 large_natural_regions = counts[1:] >= self.T_star ** 2
                 large_natural_regions_labels = unique[1:][large_natural_regions]
-                x_nature, y_nature = np.where(np.isin(features, large_natural_regions_labels))
+                x_nature_wide, y_nature_wide = np.where(np.isin(features, large_natural_regions_labels))
+                distances_from_nature_wide = np.sqrt(
+                    (x_built[:, None] - x_nature_wide) ** 2 + (y_built[:, None] - y_nature_wide) ** 2).min(
+                    axis=1)
+                self.avg_dist_from_nature_wide = distances_from_nature_wide.sum() / tot_inhabited_blocks
+                self.max_dist_from_nature_wide = distances_from_nature_wide.max()
 
             distances_from_nature = np.sqrt(
                 (x_built[:, None] - x_nature) ** 2 + (y_built[:, None] - y_nature) ** 2).min(
@@ -218,22 +224,42 @@ class Land:
             j_new = j
         return i_new, j_new
 
-    def set_record_counts_header(self, output_path):
+    def set_record_counts_header(self, output_path, urbanism_model):
         filename = os.path.join(output_path, 'current_counts.csv')
         with open(filename, "a") as f:
-            f.write(
-                "iteration,added_blocks,added_centralities,current_built_blocks,current_centralities,"
-                "current_free_nature,current_population,avg_dist_from_nature,avg_dist_from_centr,max_dist_from_nature,max_dist_from_centr\n")
+            if urbanism_model == 'isobenefit':
+                f.write(
+                    "iteration,added_blocks,added_centralities,current_built_blocks,current_centralities,"
+                    "current_free_nature,current_population,avg_dist_from_nature,avg_dist_from_centr,max_dist_from_nature,max_dist_from_centr\n")
+            elif urbanism_model == 'classical':
+                f.write(
+                    "iteration,added_blocks,added_centralities,current_built_blocks,current_centralities,"
+                    "current_free_nature,current_population,avg_dist_from_nature,avg_dist_from_wide_nature,"
+                    "avg_dist_from_centr,max_dist_from_nature,max_dist_from_wide_nature,max_dist_from_centr\n")
+            else:
+                raise ValueError(
+                    f"Invalid urbanism_model value: {urbanism_model}. Must be 'classical' or 'isobenefit'.")
 
-    def record_current_counts(self, output_path, iteration, added_blocks, added_centralities):
+    def record_current_counts(self, output_path, iteration, added_blocks, added_centralities, urbanism_model):
         filename = os.path.join(output_path, 'current_counts.csv')
         with open(filename, "a") as f:
-            f.write(
-                f"{iteration},{added_blocks},{added_centralities},"
-                f"{self.current_built_blocks},{self.current_centralities},"
-                f"{self.current_free_nature},{self.current_population},"
-                f"{self.avg_dist_from_nature},{self.avg_dist_from_centr},"
-                f"{self.max_dist_from_nature},{self.max_dist_from_centr}\n")
+            if urbanism_model == 'isobenefit':
+                f.write(
+                    f"{iteration},{added_blocks},{added_centralities},"
+                    f"{self.current_built_blocks},{self.current_centralities},"
+                    f"{self.current_free_nature},{self.current_population},"
+                    f"{self.avg_dist_from_nature},{self.avg_dist_from_centr},"
+                    f"{self.max_dist_from_nature},{self.max_dist_from_centr}\n")
+            elif urbanism_model == 'classical':
+                f.write(
+                    f"{iteration},{added_blocks},{added_centralities},"
+                    f"{self.current_built_blocks},{self.current_centralities},"
+                    f"{self.current_free_nature},{self.current_population},"
+                    f"{self.avg_dist_from_nature},{self.avg_dist_from_nature_wide},{self.avg_dist_from_centr},"
+                    f"{self.max_dist_from_nature},{self.max_dist_from_nature_wide},{self.max_dist_from_centr}\n")
+            else:
+                raise ValueError(
+                    f"Invalid urbanism_model value: {urbanism_model}. Must be 'classical' or 'isobenefit'.")
 
 
 def d(x1, y1, x2, y2):
