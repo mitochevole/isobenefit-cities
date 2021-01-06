@@ -161,13 +161,19 @@ def save_snapshot(canvas, output_path, step, format='png'):
 
 
 def save_min_distances(land: Land, output_path):
-    records_list = []
-    for x in range(land.size_x):
-        for y in range(land.size_y):
-            if land.map[x][y].is_built and not land.map[x][y].is_centrality:
-                min_nature_dist, min_centr_dist = land.get_min_distances(x, y)
-                records_list.append([x, y, min_nature_dist, min_centr_dist])
+    land_array, population_array = land.get_map_as_array()
+    x_centr, y_centr = np.where(land_array == 2)
+    x_built, y_built = np.where(land_array == 1)
+    x_nature, y_nature = np.where(land_array == 0)
+    distances_from_nature = np.sqrt(
+        (x_built[:, None] - x_nature) ** 2 + (y_built[:, None] - y_nature) ** 2).min(
+        axis=1)
+    distances_from_centr = np.sqrt(
+        (x_built[:, None] - x_centr) ** 2 + (y_built[:, None] - y_centr) ** 2).min(
+        axis=1)
     distances_mapping_filepath = os.path.join(output_path, "minimal_distances_map.csv")
-    array_of_data = np.asarray(records_list)
+    array_of_data = np.concatenate(
+        [x_built.reshape(-1, 1), y_built.reshape(-1, 1), distances_from_nature.reshape(-1, 1),
+         distances_from_centr.reshape(-1, 1)], axis=1)
     header = "X,Y,min_nature_dist, min_centr_dist"
     np.savetxt(fname=distances_mapping_filepath, X=array_of_data, delimiter=',', newline='\n', header=header)

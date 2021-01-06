@@ -187,43 +187,6 @@ class Land:
             self.avg_dist_from_nature = distances_from_nature.sum() / tot_inhabited_blocks
             self.max_dist_from_nature = distances_from_nature.max()
 
-    def get_min_distances(self, x, y):
-        r = 1
-        nature_dist = np.inf
-        centrality_dist = np.inf
-        while (nature_dist == np.inf or centrality_dist == np.inf):
-            for i in range(x - r, x + r + 1):
-                for j in [y - r, y + r]:
-                    i, j = self.adjust_boundary_coords(i, j)
-                    if self.map[i][j].is_nature:
-                        nature_dist = min(nature_dist, d(x, y, i, j))
-                    if self.map[i][j].is_centrality:
-                        centrality_dist = min(centrality_dist, d(x, y, i, j))
-            for j in range(y - r + 1, y + r - 1 + 1):
-                for i in [x - r, x + r]:
-                    i, j = self.adjust_boundary_coords(i, j)
-                    if self.map[i][j].is_nature:
-                        nature_dist = min(nature_dist, d(x, y, i, j))
-                    if self.map[i][j].is_centrality:
-                        centrality_dist = min(centrality_dist, d(x, y, i, j))
-            r += 1
-        return nature_dist, centrality_dist
-
-    def adjust_boundary_coords(self, i, j):
-        if i < 0:
-            i_new = 0
-        elif i >= self.size_x:
-            i_new = self.size_x - 1
-        else:
-            i_new = i
-        if j < 0:
-            j_new = 0
-        elif j >= self.size_y:
-            j_new = self.size_y - 1
-        else:
-            j_new = j
-        return i_new, j_new
-
     def set_record_counts_header(self, output_path, urbanism_model):
         filename = os.path.join(output_path, 'current_counts.csv')
         with open(filename, "a") as f:
