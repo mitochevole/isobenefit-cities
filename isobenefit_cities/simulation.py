@@ -56,13 +56,13 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path_prefix, build
 
     canvas = np.ones(shape=(size_x, size_y, 4))
     update_map_snapshot(land, canvas)
-    snapshot_path = save_snapshot(canvas, output_path=output_path, step=0)
-    land.set_record_counts_header(output_path=output_path)
+    save_snapshot(canvas, output_path=output_path, step=0)
+    land.set_record_counts_header(output_path=output_path, urbanism_model=urbanism_model)
     land.set_current_counts(urbanism_model)
     i = 0
     added_blocks, added_centralities = (0, 0)
     land.record_current_counts(output_path=output_path, iteration=i, added_blocks=added_blocks,
-                               added_centralities=added_centralities)
+                               added_centralities=added_centralities, urbanism_model=urbanism_model)
 
     while i <= n_steps and land.current_population <= land.max_population:
         start = time.time()
@@ -70,11 +70,11 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path_prefix, build
         land.set_current_counts(urbanism_model)
         i += 1
         land.record_current_counts(output_path=output_path, iteration=i, added_blocks=added_blocks,
-                                   added_centralities=added_centralities)
+                                   added_centralities=added_centralities, urbanism_model=urbanism_model)
         LOGGER.info(f"step: {i}, duration: {time.time() - start} seconds")
         LOGGER.info(f"step: {i}, current population: {land.current_population} inhabitants")
         update_map_snapshot(land, canvas)
-        snapshot_path = save_snapshot(canvas, output_path=output_path, step=i)
+        save_snapshot(canvas, output_path=output_path, step=i)
 
     save_min_distances(land, output_path)
 
@@ -161,13 +161,19 @@ def save_snapshot(canvas, output_path, step, format='png'):
 
 
 def save_min_distances(land: Land, output_path):
-    records_list = []
-    for x in range(land.size_x):
-        for y in range(land.size_y):
-            if land.map[x][y].is_built and not land.map[x][y].is_centrality:
-                min_nature_dist, min_centr_dist = land.get_min_distances(x, y)
-                records_list.append([x, y, min_nature_dist, min_centr_dist])
+    land_array, population_array = land.get_map_as_array()
+    x_centr, y_centr = np.where(land_array == 2)
+    x_built, y_built = np.where(land_array == 1)
+    x_nature, y_nature = np.where(land_array == 0)
+    distances_from_nature = np.sqrt(
+        (x_built[:, None] - x_nature) ** 2 + (y_built[:, None] - y_nature) ** 2).min(
+        axis=1)
+    distances_from_centr = np.sqrt(
+        (x_built[:, None] - x_centr) ** 2 + (y_built[:, None] - y_centr) ** 2).min(
+        axis=1)
     distances_mapping_filepath = os.path.join(output_path, "minimal_distances_map.csv")
-    array_of_data = np.asarray(records_list)
+    array_of_data = np.concatenate(
+        [x_built.reshape(-1, 1), y_built.reshape(-1, 1), distances_from_nature.reshape(-1, 1),
+         distances_from_centr.reshape(-1, 1)], axis=1)
     header = "X,Y,min_nature_dist, min_centr_dist"
     np.savetxt(fname=distances_mapping_filepath, X=array_of_data, delimiter=',', newline='\n', header=header)

@@ -119,9 +119,11 @@ class TestLand(TestCase):
 
         land.map[15][15].is_centrality = True
         land.set_current_counts(urbanism_model='classical')
-        self.assertAlmostEqual(1.7142857142857142, land.avg_dist_from_nature, places=7)
+        self.assertAlmostEqual(1.7142857142857142, land.avg_dist_from_nature_wide, places=7)
+        self.assertAlmostEqual(1., land.avg_dist_from_nature, places=7)
         self.assertAlmostEqual(4.821970622705455, land.avg_dist_from_centr, places=7)
-        self.assertEqual(5, land.max_dist_from_nature)
+        self.assertEqual(5, land.max_dist_from_nature_wide)
+        self.assertEqual(1, land.max_dist_from_nature)
         self.assertEqual((50) ** 0.5, land.max_dist_from_centr)
 
     def test_initialize_map_from_image(self):
