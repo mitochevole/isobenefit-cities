@@ -5,8 +5,8 @@ from functools import partial
 import numpy as np
 from scipy.ndimage import measurements as measure
 
-from isobenefit_cities import logger
-from isobenefit_cities.image_io import import_2Darray_from_image
+from src import logger
+from src.image_io import import_2Darray_from_image
 
 LOGGER = logger.get_logger()
 

@@ -4,10 +4,10 @@ import time
 
 import numpy as np
 
-from isobenefit_cities import logger
-from isobenefit_cities.image_io import save_image_from_2Darray
-from isobenefit_cities.initialization_utils import get_central_coord
-from isobenefit_cities.land_map import MapBlock, IsobenefitScenario, ClassicalScenario, Land
+from src import logger
+from src.image_io import save_image_from_2Darray
+from src.initialization_utils import get_central_coord
+from src.land_map import MapBlock, IsobenefitScenario, ClassicalScenario, Land
 from pathlib import Path
 
 N_AMENITIES = 1

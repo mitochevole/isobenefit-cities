@@ -1,7 +1,7 @@
 import argparse
 
-from isobenefit_cities import logger
-from isobenefit_cities.simulation import run_isobenefit_simulation
+from src import logger
+from src.simulation import run_isobenefit_simulation
 
 # import yaml
 

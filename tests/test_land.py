@@ -1,7 +1,7 @@
 from unittest import TestCase
 import numpy as np
 
-from isobenefit_cities.land_map import Land, MapBlock, is_nature_wide_along_axis
+from src.land_map import Land, MapBlock, is_nature_wide_along_axis
 
 
 class TestLand(TestCase):
@@ -142,7 +142,7 @@ class TestLand(TestCase):
             assert land.map[x][y].is_centrality == True
 
     def test_logger(self):
-        from isobenefit_cities import logger
+        from src import logger
         LOGGER = logger.get_logger()
         LOGGER.info("test_logger")
         print(logger.BASE_DIR)

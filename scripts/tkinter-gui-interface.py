@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from isobenefit_cities.simulation import run_isobenefit_simulation
+from src.simulation import run_isobenefit_simulation
 
 args_types = {'urbanism_model': str,
               'size_x': int,
